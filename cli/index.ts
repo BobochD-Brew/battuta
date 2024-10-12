@@ -20,8 +20,7 @@ program
     .action(async () => {
         if(!existsSync("./.gitignore")) writeFileSync("./.gitignore", "node_modules\ndist")
         execSync("npm init -y");
-        execSync("npm install");
-        execSync("npm link battuta");
+        execSync("npm install battuta --verbose");
         mkdirSync("./src");
         const defaultCode = `import { render } from "battuta/runtime"\n\nfunction App() {\n\n    return <div>Hello, World!</div>\n}\n\nrender(App, document.querySelector<HTMLDivElement>('#app')!)`;
         writeFileSync("./src/main.tsx", defaultCode)
