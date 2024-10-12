@@ -19,6 +19,8 @@
         "./runtime": "./dist/runtime.js",
         "./three": "./dist/three.js",
         "./signals": "./dist/signals.js",
+        "./contexts": "./dist/contexts.js",
+        "./hooks": "./dist/hooks.js",
         "./tweak": "./dist/tweak.js",
         "./signals/screen": "./dist/signals/screen.js",
         "./jsx-runtime": "./dist/jsx-runtime.js",
@@ -46,6 +48,12 @@
             ],
             "signals": [
                 "dist/signals.d.ts"
+            ],
+            "contexts": [
+                "dist/contexts.d.ts"
+            ],
+            "hooks": [
+                "dist/hooks.d.ts"
             ],
             "tweak": [
                 "dist/tweak.d.ts"

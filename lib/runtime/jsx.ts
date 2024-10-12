@@ -1,195 +1,183 @@
+import { contextStack } from "../contexts";
 import { useEffect } from "../signals";
 
-const append = Symbol("+");
-const appendMultiple = Symbol("+");
-const assign = Symbol("<");
-const set = Symbol("=");
-const create = Symbol("m");
-const cleanupListeners = Symbol("l");
-const onRemove = Symbol("d");
-const children = Symbol("c");
-const remove = Symbol("r");
-const unmount = Symbol("u");
-const context = Symbol("x");
-const call = Symbol("call");
+export const insert = Symbol("insert");
+export const append = Symbol("append");
+export const assign = Symbol("assign");
+export const set = Symbol("set");
+export const create = Symbol("create");
+export const listeners = Symbol("listeners");
+export const on = Symbol("on");
+export const children = Symbol("children");
+export const remove = Symbol("remove");
+// export const unmount = Symbol("unmount");
+export const context = Symbol("context");
+export const call = Symbol("call");
+export const empty = Symbol("empty");
+export const parent = Symbol("parent");
+export const cleanup = Symbol("cleanup");
+
+/**
+ *          DOM 
+ */
 
 const elementPrototype = Element.prototype;
 
-elementPrototype[append] = function(child) {
-    this.append(child as any);
-    return this;
-}
-
-elementPrototype[children] = function() {
-    return Array.from(this.children);
-}
-
-elementPrototype[remove] = function() {
+elementPrototype[remove] = Text.prototype[remove] = function() {
     this.remove();
 }
 
+elementPrototype[children] = function() {
+    return Array.from(this.childNodes);
+}
+
+elementPrototype[empty] = function() {
+    return document.createTextNode("");
+}
+
+elementPrototype[insert] = function(child, index) {
+    const currentChilds =  this[children]();
+    if(!(child instanceof Node)) child = document.createTextNode(child.toString());
+    this.insertBefore(child as Element, currentChilds[index] as Element);
+    return child;
+}
+
+/**
+ *          ABSTRACT 
+ */
+
 const objectPrototype = Object.prototype;
-
-objectPrototype[create] = function (...props) {
-    return Reflect.construct(this as any, props);
-}
-
-objectPrototype[set] = function (key, value) {
-    if(key.includes(":")) {
-        const _key = key.split(":");
-        (this as any)[_key[0]][_key[1]] = value;
-    } else {
-        (this as any)[key] = value;
-    }
-    return this;
-}
-
-objectPrototype[assign] = function (key, value) {
-    if(key.includes(":")) {
-        const _key = key.split(":");
-        useEffect((_: any) => (this as any)[_key[0]][_key[1]] = value());
-    } else {
-        useEffect((_: any) => (this as any)[key] = value());
-    }
-    return this;
-}
-
-objectPrototype[call] = function (key, value) {
-    if(key.includes(":")) {
-        const _key = key.split(":");
-        useEffect((_: any) => (this as any)[_key[0]][_key[1]](...value()));
-    } else {
-        useEffect((_: any) => (this as any)[key](...value()));
-    }
-    return this;
-}
-
-objectPrototype[append] = function () {
-    return this;
-}
-
-const contextStack: Record<symbol, any>[] = [];
-const parentStack: TreeNode[] = [];
-const insertStack: ((...childs: TreeNode[]) => void)[] = [];
-
-export const currentContext = () => {
-    return contextStack?.[contextStack.length-1];
-}
-
-export const createContext = <T = any, P = any>(defaultValue: (props?: P) => T) => {
-    const symbol = Symbol("context");
-
-    const consume = () => {
-        return currentContext()[symbol] as T;
-    }
-
-    const cascade = ({ children, ...props }: any) => () => {
-        currentContext()[symbol] = defaultValue(props);
-        return children
-    }
-
-    return [ consume, cascade ] as const;
-}
-
-export const onCleanup = (f: Function) => {
-    parentStack?.[parentStack.length-1]?.[onRemove]?.(f);
-}
-
-function appendMultipleTo(target: any, childs: any[], parent: any, _context?: any) {
-    for(let i = 0; i < childs.length; i++) {
-        const child = childs[i];
-        if (typeof child === "function") {
-            contextStack.push({...(_context || currentContext())});
-            const newParent = new Object();
-            parent[onRemove]?.(() => newParent?.[unmount]())
-            parentStack.push(newParent);
-            insertStack.push((..._childs) => appendMultipleTo(target, _childs, newParent));
-            appendMultipleTo(target, [child()], newParent);
-            contextStack.pop();
-            insertStack.pop();
-            parentStack.pop();
-        } else if (Array.isArray(child)) {
-            appendMultipleTo(target, child, parent, _context);
-        } else {
-            if(!child) continue;
-            parent[onRemove]?.(() => child?.[unmount]())
-            if(child instanceof Object) child[context] = _context || currentContext();
-            target[append](child as any);
-        }
-    }
-}
-
-objectPrototype[appendMultiple] = function (...childs) {
-    appendMultipleTo(this, childs, this, this[context]);
-    return this;
-}
-
-objectPrototype[onRemove] = function(f: Function) {
-    this[cleanupListeners] ??= [];
-    this[cleanupListeners].push(f);
-    return this;
-}
 
 objectPrototype[children] = function() {
     return []
 }
 
-objectPrototype[remove] = function() {}
+objectPrototype[insert] = function () {
+    return this;
+}
 
-objectPrototype[unmount] = function() {
-    this[cleanupListeners]?.forEach(x=>x());
-    delete this[cleanupListeners];
+objectPrototype[remove] = function() {
+    this[listeners]["remove"]?.forEach(x=>x());
+}
+
+objectPrototype[create] = function (...props) {
+    return Reflect.construct(this as any, props);
+}
+
+objectPrototype[append] = function (...childs) {
+    appendTo(this, childs, this);
+    return this;
+}
+
+objectPrototype[cleanup] = function() {
+    this[listeners]["cleanup"]?.forEach(x=>x());
+    delete this[listeners]["cleanup"];
     this[remove]();
 }
 
-export function useAppend() {
-    const insertFunction = insertStack[insertStack.length - 1];
-    return insertFunction;
+objectPrototype[on] = function(key: string, f: Function) {
+    this[listeners][key] ??= [];
+    this[listeners][key].push(f);
+    return this;
 }
 
-export function useRemove() {
-    const parent = parentStack[parentStack.length - 1];
-    if(!parent) return;
-    return () => parent[unmount]();
+objectPrototype[set] = function (value, ...keys) {
+    const key = keys.pop()!;
+    const target = resolveObj(this, keys);
+    target[key] = value;
+    return this;
+}
+
+objectPrototype[assign] = function (value, ...keys) {
+    const key = keys.pop()!;
+    const target = resolveObj(this, keys);
+    useEffect(() => target[key] = value());
+    return this;
+}
+
+objectPrototype[call] = function (value, ...keys) {
+    const key = keys.pop()!;
+    const target = resolveObj(this, keys);
+    const f = target[key].bind(target);
+    useEffect(() => f(...value()));
+    return this;
+}
+
+const listenersObj = Symbol("l");
+Object.defineProperty(objectPrototype, listeners, {
+    get() {
+        this[listenersObj] ??= {};
+        return this[listenersObj];
+    },
+});
+
+function appendTo(target: TreeNode, childs: TreeChild[], _parent: TreeNode, _index = -1): TreeNode | null {
+    let result = null;
+    for(let i = 0; i < childs.length; i++) {
+        const child = childs[i];
+        if (typeof child === "function") {
+            let index = -1;
+            useEffect(() => {
+                const newParent = new Object();
+                _parent[on]("remove", () => newParent[remove]());
+                _parent[on]("cleanup", () => newParent[cleanup]());
+                newParent[context] = {
+                    ..._parent[context],
+                    [insert]: (..._childs: any) => appendTo(target, _childs, newParent, index),
+                    [parent]: newParent,
+                }
+                contextStack.push(newParent[context]);
+                const prevChild = appendTo(target, [child()], newParent, index)!;
+                contextStack.pop();
+                result ??= prevChild;
+
+                return () => {
+                    index = target[children]().indexOf(prevChild || NaN);
+                    newParent?.[remove]();
+                }
+            })
+        } else if (Array.isArray(child)) {
+            result ??= appendTo(target, child, _parent, _index);
+        } else {
+            const addedChild = target[insert](child ?? target[empty](), _index);
+            addedChild[context] = _parent[context];
+            _parent[on]("remove", () => addedChild[remove]())
+            _parent[on]("cleanup", () => addedChild[cleanup]())
+            result ??= addedChild;
+        }
+    }
+    return result;
+}
+
+function resolveObj(target: any, keys: string[]) {
+    while(keys.length) target = target[keys.shift()!];
+    return target;
 }
 
 export const createElement = document.createElement.bind(document);
 export const createSVGElement = document.createElementNS.bind(document, 'http://www.w3.org/2000/svg');
+export const render = (node: any, root: HTMLElement) => root[append](node);
 
-export const render = (node: any, root: HTMLElement) => root[appendMultiple](node);
-
-export {
-    create,
-    append,
-    appendMultiple,
-    assign,
-    set,
-    cleanupListeners,
-    onRemove,
-    children,
-    remove,
-    unmount,
-    call,
-}
+export type TreeChild = TreeNode | (() => TreeChild) | TreeChild[];
 
 export interface TreeNode {
-    [append]: (child: TreeNode) => TreeNode;
-    [appendMultiple]: (...child: TreeNode[]) => TreeNode;
-    [assign]: (key: string, value: () => any) => TreeNode;
-    [call]: (key: string, value: () => any) => TreeNode;
-    [set]: (key: string, value: any) => TreeNode;
+    [insert]: (child: TreeNode, index: number) => TreeNode;
+    [append]: (...child: TreeNode[]) => TreeNode;
+    [assign]: (value: () => any, ...keys: string[]) => TreeNode;
+    [call]: (value: () => any, ...keys: string[]) => TreeNode;
+    [set]: (value: any, ...keys: string[]) => TreeNode;
     [create]: (...props: any[]) => TreeNode;
-    [children]: () => TreeNode[];
-    [unmount]: () => void;
+    [children]: () => readonly TreeNode[];
+    // [unmount]: () => void;
+    [cleanup]: () => void;
     [remove]: () => void;
-    [onRemove]: (f: Function) => TreeNode;
-    [cleanupListeners]?: Function[];
+    [empty]: () => TreeNode;
     [context]?: Record<string, any>;
+    [listeners]: Record<string, Function[]>;
+    [on]: (event: string, f: Function) => TreeNode;
 }
 
 declare global {
-    interface HTMLElement extends TreeNode {}
-    interface Function extends TreeNode {}
     interface Object extends TreeNode {}
     var $d: <T>(arg: T) => T;
     var $c: <T>(arg: T) => T;

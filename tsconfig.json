@@ -49,6 +49,12 @@
             "@signals": [
                 "./lib/signals/index.ts"
             ],
+            "@contexts": [
+                "./lib/contexts/index.ts"
+            ],
+            "@hooks": [
+                "./lib/hooks/index.ts"
+            ],
             "@tweak": [
                 "./lib/tweak/index.ts"
             ]
@@ -57,5 +63,8 @@
     "include": [
         "lib",
         "cli"
+    ],
+    "exclude": [
+        "dist"
     ]
 }
