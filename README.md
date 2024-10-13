@@ -102,12 +102,12 @@ const group = THREE.Group[create]() // by default -> new THREE.Group()
     )
 ```
 
-for this to work some methods need to be implmented on the parent prototypes, by default Object instances define default implementations that can be overwriten, at least `empty`, `children`, `insert` and `remove` need to be implemented, those last two should never be called directly, instead use the `useAppend` & `useRemove` hooks or the `append` and `cleanup` methods
+for this to work some methods need to be implmented on the parent prototypes, by default Object instances define default implementations that can be overwriten, at least `empty`, `childrenIndex`, `insert` and `remove` need to be implemented, those last two should never be called directly, instead use the `useAppend` & `useRemove` hooks or the `append` and `cleanup` methods
 
 this is an example in the case of threejs
 
 ```ts
-import { append, remove, children, empty } from "battuta/runtime";
+import { append, remove, childrenIndex, empty } from "battuta/runtime";
 import { Object3D, Group } from "three";
 
 Object3D.prototype[insert] = function(child: any, index?: number){
@@ -119,8 +119,8 @@ Object3D.prototype[remove] = function(){
     return this.removeFromParent();
 }
 
-Object3D.prototype[children] = function(){
-    return this.children;
+Object3D.prototype[childrenIndex] = function(child){
+    return -1;
 }
 
 Object3D.prototype[empty] = function(){

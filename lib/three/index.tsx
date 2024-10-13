@@ -1,4 +1,4 @@
-import { append, children, cleanup, empty, insert, remove } from "@runtime";
+import { append, childrenIndex, cleanup, empty, insert, remove } from "@runtime";
 import { createSignal, useEffect } from "@signals";
 import { aspectRatio, height, width } from "../signals/screen";
 import { Clock, Controls, Group, Object3D, PCFSoftShadowMap, PerspectiveCamera, Renderer, Scene, Vector2, WebGLRenderer } from "three";
@@ -11,8 +11,8 @@ Object3D.prototype[insert] = function(child: any){
     return this;
 }
 
-Object3D.prototype[children] = function(){
-    return this.children;
+Object3D.prototype[childrenIndex] = function(){
+    return -1;
 }
 
 Object3D.prototype[remove] = function(){

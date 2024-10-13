@@ -8,9 +8,8 @@ export const set = Symbol("set");
 export const create = Symbol("create");
 export const listeners = Symbol("listeners");
 export const on = Symbol("on");
-export const children = Symbol("children");
+export const childrenIndex = Symbol("childrenIndex");
 export const remove = Symbol("remove");
-// export const unmount = Symbol("unmount");
 export const context = Symbol("context");
 export const call = Symbol("call");
 export const empty = Symbol("empty");
@@ -24,21 +23,29 @@ export const cleanup = Symbol("cleanup");
 const elementPrototype = Element.prototype;
 
 elementPrototype[remove] = Text.prototype[remove] = function() {
+    // HEAVY
     this.remove();
 }
 
-elementPrototype[children] = function() {
-    return Array.from(this.childNodes);
+elementPrototype[childrenIndex] = function(child) {
+    const childs = this.childNodes;
+    for(let i = 0; i < childs.length; i++) {
+        if(childs[i] === child) return i;
+    }
+    return -1;
 }
 
+let emptyBase;
 elementPrototype[empty] = function() {
-    return document.createTextNode("");
+    emptyBase ??= document.createTextNode("");
+    return emptyBase.cloneNode();
 }
 
+// HEAVY
 elementPrototype[insert] = function(child, index) {
-    const currentChilds =  this[children]();
-    if(!(child instanceof Node)) child = document.createTextNode(child.toString());
-    this.insertBefore(child as Element, currentChilds[index] as Element);
+    if(!(child instanceof Node)) child = document.createTextNode(child as string);
+    // HEAVY
+    this.insertBefore(child as Element, this.childNodes[index]);
     return child;
 }
 
@@ -48,16 +55,19 @@ elementPrototype[insert] = function(child, index) {
 
 const objectPrototype = Object.prototype;
 
-objectPrototype[children] = function() {
-    return []
+objectPrototype[childrenIndex] = function() {
+    return -1
 }
 
 objectPrototype[insert] = function () {
     return this;
 }
 
+// HEAVY
 objectPrototype[remove] = function() {
-    this[listeners]["remove"]?.forEach(x=>x());
+    const subs = this[listeners]["remove"];
+    if(!subs) return;
+    for(const f of subs) f();
 }
 
 objectPrototype[create] = function (...props) {
@@ -70,24 +80,27 @@ objectPrototype[append] = function (...childs) {
 }
 
 objectPrototype[cleanup] = function() {
-    this[listeners]["cleanup"]?.forEach(x=>x());
-    delete this[listeners]["cleanup"];
+    const record = this[listeners];
+    const subs = record["cleanup"];
+    if(subs) for(const f of subs) f();
+    delete record["cleanup"];
     this[remove]();
 }
 
 objectPrototype[on] = function(key: string, f: Function) {
-    this[listeners][key] ??= [];
-    this[listeners][key].push(f);
+    const record = this[listeners];    
+    record[key] ??= [];
+    record[key].push(f);
     return this;
 }
 
 objectPrototype[set] = function (value, ...keys) {
     const key = keys.pop()!;
-    const target = resolveObj(this, keys);
-    target[key] = value;
+    resolveObj(this, keys)[key] = value;
     return this;
 }
 
+// HEAVY
 objectPrototype[assign] = function (value, ...keys) {
     const key = keys.pop()!;
     const target = resolveObj(this, keys);
@@ -95,6 +108,7 @@ objectPrototype[assign] = function (value, ...keys) {
     return this;
 }
 
+// HEAVY
 objectPrototype[call] = function (value, ...keys) {
     const key = keys.pop()!;
     const target = resolveObj(this, keys);
@@ -103,6 +117,7 @@ objectPrototype[call] = function (value, ...keys) {
     return this;
 }
 
+// HEAVY
 const listenersObj = Symbol("l");
 Object.defineProperty(objectPrototype, listeners, {
     get() {
@@ -111,12 +126,14 @@ Object.defineProperty(objectPrototype, listeners, {
     },
 });
 
+// HEAVY
 function appendTo(target: TreeNode, childs: TreeChild[], _parent: TreeNode, _index = { v: -1 }): TreeNode | null {
     let result = null;
     for(let i = 0; i < childs.length; i++) {
         const child = childs[i];
         if (typeof child === "function") {
             let index = _index;
+            // HEAVY
             useEffect(() => {
                 const newParent = new Object();
                 _parent[on]("remove", () => newParent[remove]());
@@ -131,9 +148,10 @@ function appendTo(target: TreeNode, childs: TreeChild[], _parent: TreeNode, _ind
                 contextStack.pop();
                 result ??= prevChild;
 
+                // HEAVY
                 return () => {
-                    index = { v: target[children]().indexOf(prevChild || NaN) };
-                    newParent?.[remove]();
+                    index = { v: target[childrenIndex](prevChild) };
+                    newParent[remove]();
                 }
             })
         } else if (Array.isArray(child)) {
@@ -156,6 +174,7 @@ function resolveObj(target: any, keys: string[]) {
     return target;
 }
 
+// HEAVY
 export const createElement = document.createElement.bind(document);
 export const createSVGElement = document.createElementNS.bind(document, 'http://www.w3.org/2000/svg');
 export const render = (node: any, root: HTMLElement) => root[append](node);
@@ -169,8 +188,7 @@ export interface TreeNode {
     [call]: (value: () => any, ...keys: string[]) => TreeNode;
     [set]: (value: any, ...keys: string[]) => TreeNode;
     [create]: (...props: any[]) => TreeNode;
-    [children]: () => readonly TreeNode[];
-    // [unmount]: () => void;
+    [childrenIndex]: (child?: TreeNode) => number;
     [cleanup]: () => void;
     [remove]: () => void;
     [empty]: () => TreeNode;
