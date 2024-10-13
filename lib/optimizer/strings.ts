@@ -73,7 +73,7 @@ export default function optimizeStrings(jsCode: string) {
         ast.program.body.unshift(...declarations);
     }
 
-    const output = generate(ast, { retainLines: true }, jsCode);
+    const output = generate(ast, {}, jsCode);
 
     return {
         code: output.code,

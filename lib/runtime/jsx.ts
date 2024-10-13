@@ -111,12 +111,12 @@ Object.defineProperty(objectPrototype, listeners, {
     },
 });
 
-function appendTo(target: TreeNode, childs: TreeChild[], _parent: TreeNode, _index = -1): TreeNode | null {
+function appendTo(target: TreeNode, childs: TreeChild[], _parent: TreeNode, _index = { v: -1 }): TreeNode | null {
     let result = null;
     for(let i = 0; i < childs.length; i++) {
         const child = childs[i];
         if (typeof child === "function") {
-            let index = -1;
+            let index = _index;
             useEffect(() => {
                 const newParent = new Object();
                 _parent[on]("remove", () => newParent[remove]());
@@ -132,14 +132,16 @@ function appendTo(target: TreeNode, childs: TreeChild[], _parent: TreeNode, _ind
                 result ??= prevChild;
 
                 return () => {
-                    index = target[children]().indexOf(prevChild || NaN);
+                    index = { v: target[children]().indexOf(prevChild || NaN) };
                     newParent?.[remove]();
                 }
             })
         } else if (Array.isArray(child)) {
-            result ??= appendTo(target, child, _parent, _index);
+            const addedChild = appendTo(target, child, _parent,  _index);
+            result ??= addedChild;
         } else {
-            const addedChild = target[insert](child ?? target[empty](), _index);
+            const addedChild = target[insert](child ?? target[empty](), _index.v);
+            if(_index.v > -1) _index.v++;
             addedChild[context] = _parent[context];
             _parent[on]("remove", () => addedChild[remove]())
             _parent[on]("cleanup", () => addedChild[cleanup]())

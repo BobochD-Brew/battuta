@@ -15,7 +15,7 @@ export function createSignal<T>(defaultValue: T) {
 
     const set = (_value: T) => {
         value = _value;
-        subscribers.forEach(it => (it[prev](),it[prev]=it()));
+        subscribers.forEach(it => (typeof it[prev] == "function" && it[prev](), it[prev]=it()));
     }
 
     return [ get, set ] as const;

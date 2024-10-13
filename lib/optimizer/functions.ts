@@ -185,7 +185,7 @@ export default function optimizeFunctions(jsCode: string) {
 
     toHandle.forEach(moveHigher);
 
-    const output = generate(ast, { retainLines: true }, jsCode);
+    const output = generate(ast, {}, jsCode);
 
     return {
         code: output.code,
