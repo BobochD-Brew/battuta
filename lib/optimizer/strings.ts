@@ -8,7 +8,7 @@ const generate = (generateRaw as any).default as typeof generateRaw;
 export default function optimizeStrings(jsCode: string) {
     const ast = parse(jsCode, {
         sourceType: 'module',
-        plugins: [ 'typescript', 'jsx' ],
+        plugins: [ 'typescript', 'jsx', 'decorators' ],
     });
 
     const stringLiterals: { [key: string]: { count: number; name: string } } = {};

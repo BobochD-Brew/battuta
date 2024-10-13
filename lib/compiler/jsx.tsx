@@ -11,11 +11,12 @@ const module = "battuta/runtime";
 export function transformJSX(jsCode: string) {
     const ast = parser.parse(jsCode, {
         sourceType: 'module',
-        plugins: ['jsx', 'typescript'],
+        plugins: ['jsx', 'typescript', 'decorators'],
     });
 
     traverse(ast, {
         JSXElement: (path) => {path.replaceWith(handleJSXElement(path.node, "$d") || t.nullLiteral())},
+        JSXFragment: (path) => {path.replaceWith(handleJSXElement(path.node, "$d") || t.nullLiteral())},
     })
 
     addImport(ast, "createElement");
@@ -29,7 +30,11 @@ export function transformJSX(jsCode: string) {
     return generate(ast, {}, jsCode);
 }
 
-function handleJSXElement(node: t.JSXElement, mode: Mode): t.Expression | null {
+function handleJSXElement(node: t.JSXElement | t.JSXFragment, mode: Mode): t.Expression | null {
+    const children = node.children.map(c=>handleChild(c, mode)!).filter(Boolean);
+
+	if(node.type == "JSXFragment") return t.arrayExpression(children);
+
     const openingElement = node.openingElement;
 
     let tagName = ""; switch(openingElement.name.type) {
@@ -49,7 +54,6 @@ function handleJSXElement(node: t.JSXElement, mode: Mode): t.Expression | null {
 
     const props = openingElement.attributes.map(a=>handleAttribute(a, mode)!).filter(Boolean);
 	const constructor = mode == "$c" && props.find(({ key }) => key[0].type == "StringLiteral" && key[0].value == "$c")?.value;
-    const children = node.children.map(c=>handleChild(c, mode)!).filter(Boolean);
 	
 	switch(true) {
 		case isMode: return <$f>
@@ -235,7 +239,7 @@ function handleChild(child: childType, mode: Mode) {
             case "JSXEmptyExpression": return;
             default: return ["$f", "$n"].includes(mode) ? child.expression : t.arrowFunctionExpression([t.identifier("_")], child.expression);
         }
-        case "JSXFragment": return;
+        case "JSXFragment": return handleJSXElement(child, mode);
         case "JSXSpreadChild": return;
         default: return;
     }
@@ -271,7 +275,7 @@ function handleAttributeValue(value: t.JSXAttribute["value"], mode: Mode) {
             default: return value.expression;
         };
         case "StringLiteral": return value;
-        case "JSXFragment": return;
+        case "JSXFragment": return handleJSXElement(value, mode);
 		case undefined: return t.booleanLiteral(true);
     }
 }
