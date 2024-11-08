@@ -95,27 +95,36 @@ const group = <THREE.Group $c>
 const group = THREE.Group[create]() // by default -> new THREE.Group()
     [appendMultiple](
         THREE.PointLight[create](0xffff00, 2, 100)
-            [call]("color:set", () => color()) // calls light.color.set(color()) when color get updated
-            [assign]("position:y", () => position())
-            [set]("position:x", 1)
-            [set]("castShadow", true)
+            [call](() => color(), "color", "set") // calls light.color.set(color()) when color get updated
+            [assign](() => position(), "position", "y")
+            [set](1, "position", "x")
+            [set](true, "castShadow")
     )
 ```
 
-for this to work some methods need to be implmented on the parent prototypes, by default Object instances define default implementations that can be overwriten, at least `append` and `remove` need to be implemented, those should never be called directly, instead use the `useAppend` & `useRemove` hooks or the `appendMultiple` and `unmount` methods
+for this to work some methods need to be implmented on the parent prototypes, by default Object instances define default implementations that can be overwriten, at least `empty`, `childrenIndex`, `insert` and `remove` need to be implemented, those last two should never be called directly, instead use the `useAppend` & `useRemove` hooks or the `append` and `cleanup` methods
 
 this is an example in the case of threejs
 
 ```ts
-import { append, remove } from "battuta/runtime"
+import { append, remove, childrenIndex, empty } from "battuta/runtime";
+import { Object3D, Group } from "three";
 
-Object3D.prototype[append] = function(child: any){
+Object3D.prototype[insert] = function(child: any, index?: number){
     this.add(child);
     return this;
 }
 
 Object3D.prototype[remove] = function(){
     return this.removeFromParent();
+}
+
+Object3D.prototype[childrenIndex] = function(child){
+    return -1;
+}
+
+Object3D.prototype[empty] = function(){
+    return new Group();
 }
 ```
 
@@ -158,10 +167,10 @@ const boxMesh = <Mesh $n
 const boxMesh = Mesh[create]( 
     BoxGeometry[create](), // this return new BoxGeometry()
     MeshPhongMaterial[create]()
-        [call]("color:set", () => color())
+        [call](() => color(), "color", "set")
 )
-    [set]("castShadow", true)
-    [set]("receiveShadow", true)
+    [set](true, "castShadow")
+    [set](true, "receiveShadow")
 ```
 
 ## Contexts
@@ -254,7 +263,6 @@ const Component = () => () => () => () => () => {
 }
 
 const div = <div/>
-div[appendMultiple](Component)
 ```
 
 the real tree looks like
@@ -306,13 +314,13 @@ You can see the the child function don't appear where it should, this happens be
 
 ```ts
 function Parent() {
-    return createElement(div)[appendMultiple](Child())
+    return createElement(div)[append](Child())
 }
 ```
 
 the div only receive the result of the child which is the second div so it never knows about the Child context, this generally don't cause issues as the div don't hold any special context.
 
-the second uncommon behavior is that if you have a `onCleanup` hook in your Child the Child is gonna consume from the parenting context, which in this case is the Parent element, this doesn't cause issues unless you're directly removing the div separatly using the `unmount` method, in this case the div will be removed as well as the h1 but the `onCleanup` hook won't run for the child as it's bound to the Parent component
+the second uncommon behavior is that if you have a `onCleanup` hook in your Child the Child is gonna consume from the parenting context, which in this case is the Parent element, this doesn't cause issues unless you're directly removing the div separatly using the `cleanup` method, in this case the div will be removed as well as the h1 but the `onCleanup` hook won't run for the child as it's bound to the Parent component
 
 ## CLI
 

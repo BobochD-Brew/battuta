@@ -8,7 +8,7 @@ const generate = (generateRaw as any).default as typeof generateRaw;
 export default function optimizeStrings(jsCode: string) {
     const ast = parse(jsCode, {
         sourceType: 'module',
-        plugins: [ 'typescript', 'jsx' ],
+        plugins: [ 'typescript', 'jsx', 'decorators' ],
     });
 
     const stringLiterals: { [key: string]: { count: number; name: string } } = {};
@@ -73,7 +73,7 @@ export default function optimizeStrings(jsCode: string) {
         ast.program.body.unshift(...declarations);
     }
 
-    const output = generate(ast, { retainLines: true }, jsCode);
+    const output = generate(ast, {}, jsCode);
 
     return {
         code: output.code,

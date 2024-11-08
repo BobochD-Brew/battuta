@@ -1,20 +1,26 @@
-import { append, appendMultiple, children, createContext, onCleanup, remove, unmount } from "@runtime";
+import { append, childrenIndex, cleanup, empty, insert, remove } from "@runtime";
 import { createSignal, useEffect } from "@signals";
 import { aspectRatio, height, width } from "../signals/screen";
-import { Clock, Controls, Object3D, PCFSoftShadowMap, PerspectiveCamera, Renderer, Scene, Vector2, WebGLRenderer } from "three";
+import { Clock, Controls, Group, Object3D, PCFSoftShadowMap, PerspectiveCamera, Renderer, Scene, Vector2, WebGLRenderer } from "three";
 import { EffectComposer, OrbitControls, RenderPass } from "three/examples/jsm/Addons.js";
+import { createContext } from "../contexts";
+import { onCleanup } from "../hooks";
 
-Object3D.prototype[append] = function(child: any){
+Object3D.prototype[insert] = function(child: any){
     this.add(child);
     return this;
 }
 
-Object3D.prototype[children] = function(){
-    return this.children;
+Object3D.prototype[childrenIndex] = function(){
+    return -1;
 }
 
 Object3D.prototype[remove] = function(){
     return this.removeFromParent();
+}
+
+Object3D.prototype[empty] = function(){
+    return new Group()
 }
 
 const [ useScene, CanvasContext ] = createContext<{
@@ -95,8 +101,8 @@ export function Canvas({
         renderPass.dispose();
         composer.dispose();
         controls.dispose();
-        camera[unmount]();
-        scene[unmount]();
+        camera[cleanup]();
+        scene[cleanup]();
     })
 
     return <CanvasContext
@@ -105,7 +111,7 @@ export function Canvas({
         renderer={renderer}
         updateFunctions={updateFunctions}
     >
-        {(scene[appendMultiple](children), undefined)}
+        {(scene[append](children), undefined)}
         {renderer.domElement}
     </CanvasContext>
 }

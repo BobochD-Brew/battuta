@@ -1,6 +1,6 @@
-import { onCleanup } from '@runtime';
 import { createSignal, useDebounced, useEffect } from '@signals';
 import {BindingParams, FolderApi, Pane} from 'tweakpane';
+import { onCleanup } from '../hooks';
 
 const folder = Symbol("folder");
 const pane = new Pane({ title: "Tweaks" });

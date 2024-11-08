@@ -11,11 +11,12 @@ const module = "battuta/runtime";
 export function transformJSX(jsCode: string) {
     const ast = parser.parse(jsCode, {
         sourceType: 'module',
-        plugins: ['jsx', 'typescript'],
+        plugins: ['jsx', 'typescript', 'decorators'],
     });
 
     traverse(ast, {
         JSXElement: (path) => {path.replaceWith(handleJSXElement(path.node, "$d") || t.nullLiteral())},
+        JSXFragment: (path) => {path.replaceWith(handleJSXElement(path.node, "$d") || t.nullLiteral())},
     })
 
     addImport(ast, "createElement");
@@ -24,13 +25,16 @@ export function transformJSX(jsCode: string) {
     addImport(ast, "assign");
     addImport(ast, "set");
     addImport(ast, "call");
-    addImport(ast, "appendMultiple");
-    addImport(ast, "onRemove");
+    addImport(ast, "append");
 
     return generate(ast, {}, jsCode);
 }
 
-function handleJSXElement(node: t.JSXElement, mode: Mode): t.Expression | null {
+function handleJSXElement(node: t.JSXElement | t.JSXFragment, mode: Mode): t.Expression | null {
+    const children = node.children.map(c=>handleChild(c, mode)!).filter(Boolean);
+
+	if(node.type == "JSXFragment") return t.arrayExpression(children);
+
     const openingElement = node.openingElement;
 
     let tagName = ""; switch(openingElement.name.type) {
@@ -49,8 +53,7 @@ function handleJSXElement(node: t.JSXElement, mode: Mode): t.Expression | null {
 	const isSVGTag = (svgTags as any)[tagName];
 
     const props = openingElement.attributes.map(a=>handleAttribute(a, mode)!).filter(Boolean);
-	const constructor = mode == "$c" && props.find(({ key }) => key.type == "StringLiteral" && key.value == "$c")?.value;
-    const children = node.children.map(c=>handleChild(c, mode)!).filter(Boolean);
+	const constructor = mode == "$c" && props.find(({ key }) => key[0].type == "StringLiteral" && key[0].value == "$c")?.value;
 	
 	switch(true) {
 		case isMode: return <$f>
@@ -76,7 +79,7 @@ function handleJSXElement(node: t.JSXElement, mode: Mode): t.Expression | null {
 					<t.blockStatement>
 						<array>
 							<t.switchStatement>
-								{props.find(it => it.key.value == "on")?.value}
+								{props.find(it => it.key[0].value == "on")?.value}
 								{node.children
 									.filter(child => child.type == "JSXElement")
 									.filter(child => child.openingElement.name.type == "JSXIdentifier")
@@ -129,7 +132,7 @@ function handleJSXElement(node: t.JSXElement, mode: Mode): t.Expression | null {
 			withAtrributes(
 				props,
 				t.callExpression(
-					t.identifier(isSVGTag ? 'createSVGElement' : 'createElement'),
+					t.identifier(isSVGTag ? btt('createSVGElement') : btt('createElement')),
 					[t.stringLiteral(tagName)]
 				)
 			)
@@ -142,7 +145,7 @@ function handleJSXElement(node: t.JSXElement, mode: Mode): t.Expression | null {
 				t.callExpression(
 					t.memberExpression(
 						t.identifier(tagName),
-						t.identifier('create'),
+						t.identifier(btt('create')),
 						true
 					), (constructor && constructor.type == "ArrayExpression") ? constructor.elements.map(x => x ? x : t.nullLiteral()) : []
 				)
@@ -154,7 +157,7 @@ function handleJSXElement(node: t.JSXElement, mode: Mode): t.Expression | null {
 			t.callExpression(
 				t.memberExpression(
 					t.identifier(tagName),
-					t.identifier('create'),
+					t.identifier(btt('create')),
 					true
 				), children
 			)
@@ -173,8 +176,8 @@ function handleJSXElement(node: t.JSXElement, mode: Mode): t.Expression | null {
 			[t.objectExpression([
 				...props.map(
 					({ key, value }) => ["StringLiteral", "BooleanLiteral"].includes(value.type) ?
-						t.objectProperty(key, value) :
-						t.objectMethod("get", t.identifier(key.value), [], t.blockStatement([t.returnStatement(value)]))
+						t.objectProperty(t.stringLiteral(joinKeys(...key)), value) :
+						t.objectMethod("get", t.identifier(joinKeys(...key)), [], t.blockStatement([t.returnStatement(value)]))
 				),
 				t.objectProperty(t.stringLiteral("children"), t.arrowFunctionExpression([t.identifier("_")], t.arrayExpression(children)))
 			])]
@@ -183,38 +186,39 @@ function handleJSXElement(node: t.JSXElement, mode: Mode): t.Expression | null {
     
 }
 
-function withAtrributes(props: { key: t.StringLiteral; value: t.Expression }[], node: t.Expression) {
+function withAtrributes(props: { key: t.StringLiteral[]; value: t.Expression }[], node: t.Expression) {
 	return props.reduce((acc, { key, value }) => {
 		switch(true) {
-			case key.type == "StringLiteral" && key.value == "$": return acc;
+			case key[0].type == "StringLiteral" && key[0].value == "$": return acc;
 			case ["StringLiteral", "BooleanLiteral"].includes(value.type): return t.callExpression(
-				t.memberExpression(acc, t.identifier("set"), true),
-				[splitKey(key), value]
+				t.memberExpression(acc, t.identifier(btt("set")), true),
+				[value, ...key]
 			);
 			case (
 				value.type == "CallExpression" &&
 				value.callee.type == "Identifier" &&
 				value.callee.name == "$call"
 			): return t.callExpression(
-				t.memberExpression(acc, t.identifier("call"), true),
-				[splitKey(key), t.arrowFunctionExpression(
+				t.memberExpression(acc, t.identifier(btt("call")), true),
+				[t.arrowFunctionExpression(
 					[t.identifier("_")],
 					t.arrayExpression(value.arguments as (t.Expression | t.SpreadElement)[])
-				)]
+				), ...key]
 			);
 			default:  return t.callExpression(
-				t.memberExpression(acc, t.identifier("assign"), true),
-				[splitKey(key), t.arrowFunctionExpression([t.identifier("_")], value)]
+				t.memberExpression(acc, t.identifier(btt("assign")), true),
+				[t.arrowFunctionExpression([t.identifier("_")], value), ...key]
 			);
 		}
 	}, node)
 }
 
 function withChildren(children: t.Expression[], node: t.Expression) {
+	if(!children || children.length == 0) return node;
 	return t.callExpression(
 		t.memberExpression(
 			node,
-			t.identifier("appendMultiple"),
+			t.identifier(btt("append")),
 			true
 		),
 		children
@@ -235,7 +239,7 @@ function handleChild(child: childType, mode: Mode) {
             case "JSXEmptyExpression": return;
             default: return ["$f", "$n"].includes(mode) ? child.expression : t.arrowFunctionExpression([t.identifier("_")], child.expression);
         }
-        case "JSXFragment": return;
+        case "JSXFragment": return handleJSXElement(child, mode);
         case "JSXSpreadChild": return;
         default: return;
     }
@@ -258,8 +262,8 @@ function handleAttribute(attribute: t.JSXSpreadAttribute | t.JSXAttribute, mode:
 
 function handleAttributeName(name: t.JSXAttribute["name"]) {
     switch(name?.type) {
-        case "JSXIdentifier": return t.stringLiteral(name.name);
-        case "JSXNamespacedName": return t.stringLiteral(name.namespace.name + ":" + name.name.name);
+        case "JSXIdentifier": return [t.stringLiteral(name.name)];
+        case "JSXNamespacedName": return [t.stringLiteral(name.namespace.name), t.stringLiteral(name.name.name)];
     }
 }
 
@@ -271,36 +275,25 @@ function handleAttributeValue(value: t.JSXAttribute["value"], mode: Mode) {
             default: return value.expression;
         };
         case "StringLiteral": return value;
-        case "JSXFragment": return;
+        case "JSXFragment": return handleJSXElement(value, mode);
 		case undefined: return t.booleanLiteral(true);
     }
 }
 
-function splitKey(literal: t.StringLiteral) {
-	const value = literal.value;
-	if(value.includes(":")) return <$f>
-		<t.binaryExpression>
-			{"+" as "+"}
-			<t.stringLiteral>{value.split(":")[0]}</t.stringLiteral>
-			<t.binaryExpression>
-				{"+" as "+"}
-				<t.stringLiteral>:</t.stringLiteral>
-				<t.stringLiteral>{value.split(":").slice(1).join(":")}</t.stringLiteral>
-			</t.binaryExpression>
-		</t.binaryExpression>
-	</$f> as t.BinaryExpression;
-	return literal;
+function joinKeys(...keys: t.StringLiteral[]) {
+	return keys.map(s => s.value).join(":");
 }
 
 function addImport(ast: ParseResult<any>, name: string) {
     let createElementImported = false;
-
+	const as = btt(name);
     traverse(ast, {
         ImportDeclaration(path) {
             const { node } = path;
             if (node.specifiers.some(
+                specifier => t.isImportSpecifier(specifier)
                 // @ts-ignore
-                specifier => t.isImportSpecifier(specifier) && specifier.imported.name === name
+				&& specifier.local.name === as && specifier.imported.name === name
             )) {
                 createElementImported = true;
             }
@@ -312,7 +305,7 @@ function addImport(ast: ParseResult<any>, name: string) {
             t.importDeclaration(
                 [
                     t.importSpecifier(
-                        t.identifier(name),
+                        t.identifier(as),
                         t.identifier(name)
                     )
                 ],
@@ -320,6 +313,10 @@ function addImport(ast: ParseResult<any>, name: string) {
             )
         );
     }
+}
+
+function btt(name: string) {
+	return `$btt_${name}`;
 }
 
 type Mode = "$d" | "$c" | "$f" | "$n"

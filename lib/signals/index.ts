@@ -1,4 +1,6 @@
-const contextStack: any[] = [];
+const subscribersStack: any[] = [];
+
+const prev = Symbol("prev");
 
 export function createSignal<T>(defaultValue: T) {
 
@@ -6,23 +8,23 @@ export function createSignal<T>(defaultValue: T) {
     let value = defaultValue;
 
     const get = () => {
-        const context = contextStack[contextStack.length - 1];
-        if(context) subscribers.add(context);
+        const subscriber = subscribersStack[subscribersStack.length - 1];
+        if(subscriber) subscribers.add(subscriber);
         return value;
     }
 
     const set = (_value: T) => {
         value = _value;
-        subscribers.forEach(it => it());
+        subscribers.forEach(it => (typeof it[prev] == "function" && it[prev](), it[prev]=it()));
     }
 
     return [ get, set ] as const;
 }
 
 export function useEffect(callback: Function) {
-    contextStack.push(callback);
-    callback();
-    contextStack.pop();
+    subscribersStack.push(callback);
+    callback[prev] = callback();
+    subscribersStack.pop();
 }
 
 export function useDebounced(callback: Function, debounceTime = 250) {
@@ -37,4 +39,10 @@ export function useDebounced(callback: Function, debounceTime = 250) {
             setTimeout(callback, debounceTime)
         }
     })
+}
+
+declare global {
+    interface Function {
+        [prev]: Function;
+    }
 }

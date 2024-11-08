@@ -18,6 +18,8 @@ const entries = {
     runtime: './lib/runtime/index.ts',
     three: './lib/three/index.tsx',
     signals: './lib/signals/index.ts',
+    contexts: './lib/contexts/index.ts',
+    hooks: './lib/hooks/index.ts',
     tweak: './lib/tweak/index.ts',
     ["signals/screen"]: './lib/signals/screen.ts',
     ["jsx-runtime"]: './lib/runtime/jsx-types.ts',
