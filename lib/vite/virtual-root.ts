@@ -7,7 +7,7 @@ export function battutaVirtualRoot() {
         enforce: "pre",
         load: (id) => {
             if(id !== "index.html") return;
-            const content = existsSync("./index.html") ? readFileSync("./index.html") : defaultHTML;
+            const content = existsSync("./index.html") ? readFileSync("./index.html", "utf-8") : defaultHTML;
             return content;
         },
         resolveId: (source, importer, options) => {
@@ -16,7 +16,7 @@ export function battutaVirtualRoot() {
         configureServer: (server) => {
             server.middlewares.use((req, res, next) => {
                 if (req.url !== '/') return next();
-                const content = existsSync("./index.html") ? readFileSync("./index.html") : defaultHTML;
+                const content = existsSync("./index.html") ? readFileSync("./index.html", "utf-8") : defaultHTML;
                 res.setHeader('Content-Type', 'text/html')
                 res.statusCode = 200;
                 res.end(content)
