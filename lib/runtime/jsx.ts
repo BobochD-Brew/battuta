@@ -1,4 +1,4 @@
-import { contextStack } from "../contexts";
+import { contextStack, currentContext } from "../contexts";
 import { useEffect } from "../signals";
 
 export const insert = Symbol("insert");
@@ -138,6 +138,7 @@ function appendTo(target: TreeNode, childs: TreeChild[], _parent: TreeNode, _ind
                 const newParent = new Object();
                 _parent[on]("remove", () => newParent[remove]());
                 _parent[on]("cleanup", () => newParent[cleanup]());
+                _parent[context] ??= currentContext();
                 newParent[context] = {
                     ..._parent[context],
                     [insert]: (..._childs: any) => appendTo(target, _childs, newParent, index),
