@@ -1,13 +1,15 @@
 import { existsSync, readFileSync } from "fs";
 import { Plugin } from "vite";
 
-export function battutaVirtualRoot() {
+export function battutaVirtualRoot(root?: string) {
+    const defaultContent = defaultHTML(root ?? "/src/main.tsx");
+    
     return {
         name: "battuta-virtual-root",
         enforce: "pre",
         load: (id) => {
             if(id !== "index.html") return;
-            const content = existsSync("./index.html") ? readFileSync("./index.html", "utf-8") : defaultHTML;
+            const content = existsSync("./index.html") ? readFileSync("./index.html", "utf-8") : defaultContent;
             return content;
         },
         resolveId: (source, importer, options) => {
@@ -16,7 +18,7 @@ export function battutaVirtualRoot() {
         configureServer: (server) => {
             server.middlewares.use((req, res, next) => {
                 if (req.url !== '/') return next();
-                const content = existsSync("./index.html") ? readFileSync("./index.html", "utf-8") : defaultHTML;
+                const content = existsSync("./index.html") ? readFileSync("./index.html", "utf-8") : defaultContent;
                 res.setHeader('Content-Type', 'text/html')
                 res.statusCode = 200;
                 res.end(content)
@@ -30,7 +32,7 @@ export function battutaVirtualRoot() {
     } as Plugin;
 }
 
-const defaultHTML = `
+const defaultHTML = (root: string) => `
 <!DOCTYPE html>
 <html lang="en">
 
@@ -43,7 +45,7 @@ const defaultHTML = `
 
 <body>
     <div id="app"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module" src="${root}"></script>
 </body>
 
 </html>

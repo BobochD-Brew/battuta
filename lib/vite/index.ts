@@ -14,7 +14,9 @@ type Config = {
         strings?: boolean;
         functions?: boolean;
     },
+    root?: string,
 }
+
 export {
     battutaMacros,
     battutaFolders,
@@ -62,7 +64,7 @@ export function battutaOptimizer(config?: Config["optimizer"]) {
 export default function battutaPlugin(config?: Config) {
     return [
         battutaConfig(),
-        battutaVirtualRoot(),
+        battutaVirtualRoot(config?.root),
         battutaMacros(config?.macros),
         battutaJSX(config?.compiler),
         battutaFolders(config?.folders),
