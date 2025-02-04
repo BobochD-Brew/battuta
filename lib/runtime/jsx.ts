@@ -16,43 +16,6 @@ export const empty = Symbol("empty");
 export const parent = Symbol("parent");
 export const cleanup = Symbol("cleanup");
 
-/**
- *          DOM 
- */
-
-const elementPrototype = Element.prototype;
-
-elementPrototype[remove] = Text.prototype[remove] = function() {
-    // HEAVY
-    this.remove();
-}
-
-elementPrototype[childrenIndex] = function(child) {
-    const childs = this.childNodes;
-    for(let i = 0; i < childs.length; i++) {
-        if(childs[i] === child) return i;
-    }
-    return -1;
-}
-
-let emptyBase;
-elementPrototype[empty] = function() {
-    emptyBase ??= document.createTextNode("");
-    return emptyBase.cloneNode();
-}
-
-// HEAVY
-elementPrototype[insert] = function(child, index) {
-    if(!(child instanceof Node)) child = document.createTextNode(child as string);
-    // HEAVY
-    this.insertBefore(child as Element, this.childNodes[index]);
-    return child;
-}
-
-/**
- *          ABSTRACT 
- */
-
 const objectPrototype = Object.prototype;
 
 objectPrototype[childrenIndex] = function() {
@@ -175,10 +138,7 @@ function resolveObj(target: any, keys: string[]) {
     return target;
 }
 
-// HEAVY
-export const createElement = document.createElement.bind(document);
-export const createSVGElement = document.createElementNS.bind(document, 'http://www.w3.org/2000/svg');
-export const render = (node: any, root: HTMLElement) => root[append](node);
+export const render = (node: any, root: TreeNode) => root[append](node);
 
 export type TreeChild = TreeNode | (() => TreeChild) | TreeChild[];
 

@@ -9,7 +9,10 @@ import { battutaVirtualRoot } from "./virtual-root";
 type Config = {
     macros?: Options,
     compiler?: {},
-    folders?: {},
+    folders?: {
+        temp: string,
+        move: string,
+    },
     optimizer?: {
         strings?: boolean;
         functions?: boolean;

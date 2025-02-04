@@ -2,27 +2,24 @@ import { existsSync, lstatSync, mkdirSync, readdirSync, renameSync, rmdirSync } 
 import path, { join, resolve } from "path";
 import { Plugin } from "vite";
 
-const tempFolder = ".temp";
-const moveFolder = ".move";
-
-export function battutaFolders(config: any) {
+export function battutaFolders(config?: any) {
     return {
         name: "battuta-build-folders",
         generateBundle(options, _bundle) {
-            handleTempFolder(options.dir!);
-            handleMoveFolder(options.dir!);
+            handleTempFolder(options.dir!, config?.temp ?? ".temp");
+            handleMoveFolder(options.dir!, config?.move ?? ".move");
         },
     } as Plugin;
 }
 
-function handleTempFolder(dist: string) {
+function handleTempFolder(dist: string, tempFolder: string) {
     const tempDir = resolve(tempFolder);
     const distDir = join(dist);
     if (!existsSync(distDir)) mkdirSync(distDir, { recursive: true });
     if (existsSync(tempDir)) rmdirSync(tempDir, { recursive: true, force: true } as any);
 }
 
-function handleMoveFolder(dist: string) {
+function handleMoveFolder(dist: string, moveFolder: string) {
     const moveDir = resolve(moveFolder);
     const distDir = join(dist);
     if (!existsSync(distDir)) mkdirSync(distDir, { recursive: true });

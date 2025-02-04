@@ -29,6 +29,10 @@ type WithSvg = HTMLElements & {
     }
 }
 
+type WithFunction<T> = {
+    [K in keyof T]: T[K] extends ((...args: any) => any) ? (Parameters<T[K]> | T[K]) : T[K];
+}
+
 export namespace JSX {
     // @ts-ignore
     export interface IntrinsicElements extends WithSvg {
@@ -55,7 +59,7 @@ export namespace JSX {
     export interface ElementChildrenAttribute {
         children: {};
     }
-    export type LibraryManagedAttributes<C, P> = (C extends new (...args: any) => infer U ? Partial<Omit<U, "children">> : {}) &
+    export type LibraryManagedAttributes<C, P> = (C extends new (...args: any) => infer U ? Partial<Omit<WithFunction<U>, "children">> : {}) &
         (C extends (...args: any) => any ? ({ children?: Parameters<C>[number] | Parameters<C>[number][] }) : {})
         & {
             $c?: (C extends new (...args: any) => any ? ConstructorParameters<C> : []) | boolean;
@@ -66,12 +70,12 @@ export namespace JSX {
         } & (C extends new (...args: any) => infer U ? {
             [K in DeepPairs<U>]?: K extends `${infer Q}:${infer T}` ? (
                 // @ts-ignore
-                U[Q][T] extends Function ? (Parameters<U[Q][T]> | U[Q][T]) : U[Q][T]
+                U[Q][T] extends ((...args: any) => any) ? (Parameters<U[Q][T]> | U[Q][T]) : U[Q][T]
             ) : never;
         } : C extends (...args: any) => infer U ? {
             [K in DeepPairs<U>]?: K extends `${infer Q}:${infer T}` ? (
                 // @ts-ignore
-                U[Q][T] extends Function ? (Parameters<U[Q][T]> | U[Q][T]) : U[Q][T]
+                U[Q][T] extends ((...args: any) => any) ? (Parameters<U[Q][T]> | U[Q][T]) : U[Q][T]
             ) : never;
         } : {
 

@@ -6,8 +6,6 @@ import { svgTags, tags } from './tags';
 const traverse = (traverseRaw as any).default as typeof traverseRaw;
 const generate = (generateRaw as any).default as typeof generateRaw;
 
-const module = "battuta/runtime";
-
 export function transformJSX(jsCode: string) {
     const ast = parser.parse(jsCode, {
         sourceType: 'module',
@@ -19,21 +17,21 @@ export function transformJSX(jsCode: string) {
         JSXFragment: (path) => {path.replaceWith(handleJSXElement(path.node, "$d") || t.nullLiteral())},
     })
 
-    addImport(ast, "createElement");
-    addImport(ast, "createSVGElement");
-    addImport(ast, "create");
-    addImport(ast, "assign");
-    addImport(ast, "set");
-    addImport(ast, "call");
-    addImport(ast, "append");
+    addImport(ast, "createElement", "battuta/dom");
+    addImport(ast, "createSVGElement", "battuta/dom");
+    addImport(ast, "create", "battuta/runtime");
+    addImport(ast, "assign", "battuta/runtime");
+    addImport(ast, "set", "battuta/runtime");
+    addImport(ast, "call", "battuta/runtime");
+    addImport(ast, "append", "battuta/runtime");
 
     return generate(ast, {}, jsCode);
 }
 
 function handleJSXElement(node: t.JSXElement | t.JSXFragment, mode: Mode): t.Expression | null {
-    const children = node.children.map(c=>handleChild(c, mode)!).filter(Boolean);
+	const getChilds = () => node.children.map(c=>handleChild(c, mode)!).filter(Boolean);
 
-	if(node.type == "JSXFragment") return t.arrayExpression(children);
+	if(node.type == "JSXFragment") return t.arrayExpression(getChilds());
 
     const openingElement = node.openingElement;
 
@@ -49,6 +47,8 @@ function handleJSXElement(node: t.JSXElement | t.JSXFragment, mode: Mode): t.Exp
 	// @ts-ignore
 	const hasMode = openingElement.attributes.find(a => a.type === "JSXAttribute" && a.name.type == "JSXIdentifier" && modes[a.name.name])?.name?.name as Mode;
 	if(hasMode) mode = hasMode;
+
+    const children = getChilds();
 	const isTag = tags[tagName];
 	const isSVGTag = (svgTags as any)[tagName];
 
@@ -284,7 +284,7 @@ function joinKeys(...keys: t.StringLiteral[]) {
 	return keys.map(s => s.value).join(":");
 }
 
-function addImport(ast: ParseResult<any>, name: string) {
+function addImport(ast: ParseResult<any>, name: string, module: string) {
     let createElementImported = false;
 	const as = btt(name);
     traverse(ast, {
