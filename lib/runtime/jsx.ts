@@ -27,11 +27,12 @@ objectPrototype[insert] = function () {
 }
 
 // HEAVY
-objectPrototype[remove] = function() {
-    const subs = this[listeners]["remove"];
-    if(!subs) return;
-    for(const f of subs) f();
-}
+// objectPrototype[remove] = function() {
+//     // const subs = this[listeners]["remove"];
+//     // if(!subs) return;
+//     // for(const f of subs) f();
+//     return this;
+// }
 
 objectPrototype[create] = function (...props) {
     return Reflect.construct(this as any, props);
@@ -42,12 +43,13 @@ objectPrototype[append] = function (...childs) {
     return this;
 }
 
-objectPrototype[cleanup] = function() {
+objectPrototype[cleanup] = function(skipRemove) {
     const record = this[listeners];
     const subs = record["cleanup"];
-    if(subs) for(const f of subs) f();
+    const hasRemove = !!this[remove];
+    if(subs) for(const f of subs) f(hasRemove);
     delete record["cleanup"];
-    this[remove]();
+    !skipRemove && hasRemove && this[remove]();
 }
 
 objectPrototype[on] = function(key: string, f: Function) {
@@ -99,7 +101,7 @@ function appendTo(target: TreeNode, childs: TreeChild[], _parent: TreeNode, _ind
             // HEAVY
             useEffect(() => {
                 const newParent = new Object();
-                _parent[on]("remove", () => newParent[remove]());
+                // _parent[on]("remove", () => newParent[remove]());
                 _parent[on]("cleanup", () => newParent[cleanup]());
                 _parent[context] ??= currentContext();
                 newParent[context] = {
@@ -115,7 +117,7 @@ function appendTo(target: TreeNode, childs: TreeChild[], _parent: TreeNode, _ind
                 // HEAVY
                 return () => {
                     index = { v: target[childrenIndex](prevChild) };
-                    newParent[remove]();
+                    newParent[cleanup]();
                 }
             })
         } else if (Array.isArray(child)) {
@@ -125,8 +127,8 @@ function appendTo(target: TreeNode, childs: TreeChild[], _parent: TreeNode, _ind
             const addedChild = target[insert](child ?? target[empty](), _index.v);
             if(_index.v > -1) _index.v++;
             addedChild[context] = _parent[context];
-            _parent[on]("remove", () => addedChild[remove]())
-            _parent[on]("cleanup", () => addedChild[cleanup]())
+            // _parent[on]("remove", () => addedChild[remove]())
+            _parent[on]("cleanup", (s: boolean) => addedChild[cleanup](s))
             result ??= addedChild;
         }
     }
@@ -150,7 +152,7 @@ export interface TreeNode {
     [set]: (value: any, ...keys: string[]) => TreeNode;
     [create]: (...props: any[]) => TreeNode;
     [childrenIndex]: (child?: TreeNode) => number;
-    [cleanup]: () => void;
+    [cleanup]: (skipRemove?: boolean) => void;
     [remove]: () => void;
     [empty]: () => TreeNode;
     [context]?: Record<string, any>;

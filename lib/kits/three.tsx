@@ -8,7 +8,7 @@ import { onCleanup } from "../hooks";
 
 Object3D.prototype[insert] = function(child: any){
     this.add(child);
-    return this;
+    return child;
 }
 
 Object3D.prototype[childrenIndex] = function(){
