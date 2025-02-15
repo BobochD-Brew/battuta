@@ -56,9 +56,9 @@ tsConfig.compilerOptions.paths = aliases;
 
 writeFileSync('./tsconfig.json', JSON.stringify(tsConfig, null, 4));
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
     plugins: [
-        dts({
+        mode == "quick" ? null : dts({
             rollupTypes: true,
             tsconfigPath: "./tsconfig.json",
             insertTypesEntry: true,
@@ -95,4 +95,4 @@ export default defineConfig({
             },
         }
     }
-})
+}))

@@ -13,8 +13,8 @@ export function transformJSX(jsCode: string) {
     });
 
     traverse(ast, {
-        JSXElement: (path) => {path.replaceWith(handleJSXElement(path.node, "$d") || t.nullLiteral())},
-        JSXFragment: (path) => {path.replaceWith(handleJSXElement(path.node, "$d") || t.nullLiteral())},
+        JSXElement: (path) => {path.replaceWith(handleJSXElement(path.node) || t.nullLiteral())},
+        JSXFragment: (path) => {path.replaceWith(handleJSXElement(path.node) || t.nullLiteral())},
     })
 
     addImport(ast, "createElement", "battuta/dom");
@@ -28,7 +28,9 @@ export function transformJSX(jsCode: string) {
     return generate(ast, {}, jsCode);
 }
 
-function handleJSXElement(node: t.JSXElement | t.JSXFragment, mode: Mode): t.Expression | null {
+function handleJSXElement(node: t.JSXElement | t.JSXFragment): t.Expression | null {
+	let mode: Mode = "$d";
+
 	const getChilds = () => node.children.map(c=>handleChild(c, mode)!).filter(Boolean);
 
 	if(node.type == "JSXFragment") return t.arrayExpression(getChilds());
@@ -42,8 +44,6 @@ function handleJSXElement(node: t.JSXElement | t.JSXFragment, mode: Mode): t.Exp
         case "JSXMemberExpression": tagName = openingElement.name.object.name + "." + openingElement.name.property.name; break;
     }
 
-	const isMode = modes[tagName];
-	if(isMode) mode = tagName as Mode;
 	// @ts-ignore
 	const hasMode = openingElement.attributes.find(a => a.type === "JSXAttribute" && a.name.type == "JSXIdentifier" && modes[a.name.name])?.name?.name as Mode;
 	if(hasMode) mode = hasMode;
@@ -53,81 +53,9 @@ function handleJSXElement(node: t.JSXElement | t.JSXFragment, mode: Mode): t.Exp
 	const isSVGTag = (svgTags as any)[tagName];
 
     const props = openingElement.attributes.map(a=>handleAttribute(a, mode)!).filter(Boolean);
-	const constructor = mode == "$c" && props.find(({ key }) => key[0].type == "StringLiteral" && key[0].value == "$c")?.value;
 	
-	switch(true) {
-		case isMode: return <$f>
-			<switch on={children.length}>
-				<case is={0} so={null}/>
-				<case is={1} so={children[0]}/>
-				<case default>
-					<t.arrayExpression>{children}</t.arrayExpression>
-				</case>
-			</switch>
-		</$f>
-
-		case tagName === "array": return <$f>
-			<t.arrayExpression>{children}</t.arrayExpression>
-		</$f>
-
-		case tagName === "switch": return <$f>
-			<t.callExpression>
-				<t.arrowFunctionExpression>
-					<array>
-						<t.identifier>_</t.identifier>
-					</array>
-					<t.blockStatement>
-						<array>
-							<t.switchStatement>
-								{props.find(it => it.key[0].value == "on")?.value}
-								{node.children
-									.filter(child => child.type == "JSXElement")
-									.filter(child => child.openingElement.name.type == "JSXIdentifier")
-									.filter(child => (child.openingElement.name as any).name == "case")
-									.map(child => {
-										const isDefault = child.openingElement.attributes
-											.filter(it => it.type == "JSXAttribute")
-											.filter(it => it.name.type == "JSXIdentifier")
-											.find(it => it.name.name == "default")
-
-										const propValue = child.openingElement.attributes
-											.filter(it => it.type == "JSXAttribute")
-											.filter(it => it.name.type == "JSXIdentifier")
-											.find(it => it.name.name == "is")
-											?.value
-
-										const propResult = child.openingElement.attributes
-											.filter(it => it.type == "JSXAttribute")
-											.filter(it => it.name.type == "JSXIdentifier")
-											.find(it => it.name.name == "so")
-											?.value
-
-										const value = propValue?.type == "StringLiteral" ? propValue : propValue?.type == "JSXExpressionContainer" ? propValue.expression : t.identifier("NaN");
-										const childrens = child.children.map(c => handleChild(c, mode)).filter(Boolean) as t.Expression[];
-										let result = propResult?.type == "StringLiteral" ? propResult : propResult?.type == "JSXExpressionContainer" ? (propResult.expression.type == "JSXEmptyExpression" ? null : propResult.expression) : propResult?.type == "JSXElement" ? handleJSXElement(propResult, mode) : null;
-										result ||= childrens.length == 1 ? childrens[0] : childrens.length == 0 ? t.nullLiteral() : t.arrayExpression(childrens);
-
-										return <$f>
-											<t.switchCase>
-												{isDefault ? null : value}
-												<array>
-													<t.returnStatement>
-														{result}
-													</t.returnStatement>
-												</array>
-											</t.switchCase>
-										</$f>
-									}) as any
-								}
-							</t.switchStatement>
-						</array>
-					</t.blockStatement>
-				</t.arrowFunctionExpression>
-				<array/>
-			</t.callExpression>
-		</$f>
-
-        case isTag: return withChildren(
+	if(isTag) {
+		return withChildren(
 			children,
 			withAtrributes(
 				props,
@@ -137,59 +65,85 @@ function handleJSXElement(node: t.JSXElement | t.JSXFragment, mode: Mode): t.Exp
 				)
 			)
 		);
+	}
 
-		case mode === "$c": return withChildren(
+	if(mode === "$c") {
+		const raw = props.find(({ key }) => key[0].type == "StringLiteral" && key[0].value == "$c")?.value as t.ArrayExpression;
+		const rawElements = raw.elements as t.ArrayExpression[];
+		const constructorSignatures = rawElements.map(el => el.elements.map(it => (it as t.StringLiteral).value));
+
+		const objectProps = props.reduce((p,v) => {
+			if(v.key.length > 1) return p;
+			p[v.key[0].value] = v.value;
+			return p
+		}, {} as Record<string, t.Expression>)
+
+		const constructorCandidates = constructorSignatures.map(sig => sig.map(param => objectProps[param]))
+		const bestCandidate = constructorCandidates.sort((a, b) => b.filter(Boolean).length - a.filter(Boolean).length)[0];
+		const lastNonNull = bestCandidate.findLastIndex(Boolean);
+		const constructor = bestCandidate.slice(0, lastNonNull + 1);
+		const keys = constructorSignatures[constructorCandidates.indexOf(bestCandidate)];
+
+		return withChildren(
 			children,
 			withAtrributes(
-				props,
+				props.filter(prop => prop.key.length > 1 || !keys.includes(prop.key[0].value)),
 				t.callExpression(
 					t.memberExpression(
 						t.identifier(tagName),
 						t.identifier(btt('create')),
 						true
-					), (constructor && constructor.type == "ArrayExpression") ? constructor.elements.map(x => x ? x : t.nullLiteral()) : []
+					),
+					constructor.map(el => el || t.identifier("undefined"))
 				)
 			)
-		);
-		
-		case mode === "$n": return withAtrributes(
-			props,
-			t.callExpression(
-				t.memberExpression(
-					t.identifier(tagName),
-					t.identifier(btt('create')),
-					true
-				), children
-			)
 		)
+	}
 
-		case mode === "$f": return withAtrributes(
-			props,
+	if(mode === "$f") {
+		const raw = props.find(({ key }) => key[0].type == "StringLiteral" && key[0].value == "$f")?.value as t.ArrayExpression;
+		const rawElements = raw.elements as t.ArrayExpression[];
+		const callSignatures = rawElements.map(el => el.elements.map(it => (it as t.StringLiteral).value));
+
+		const objectProps = props.reduce((p,v) => {
+			if(v.key.length > 1) return p;
+			p[v.key[0].value] = v.value;
+			return p
+		}, {} as Record<string, t.Expression>)
+
+		const callCandidates = callSignatures.map(sig => sig.map(param => objectProps[param]))
+		const bestCandidate = callCandidates.sort((a, b) => b.filter(Boolean).length - a.filter(Boolean).length)[0];
+		const lastNonNull = bestCandidate.findLastIndex(Boolean);
+		const call = bestCandidate.slice(0, lastNonNull + 1);
+		const keys = callSignatures[callCandidates.indexOf(bestCandidate)];
+		
+		return withAtrributes(
+			props.filter(prop => prop.key.length > 1 || !keys.includes(prop.key[0].value)),
 			t.callExpression(
 				t.identifier(tagName),
-				children
+				call.map(el => el || t.identifier("undefined"))
 			)
 		)
+	}
 
-        default: return t.callExpression(
-			t.identifier(tagName),
-			[t.objectExpression([
-				...props.map(
-					({ key, value }) => ["StringLiteral", "BooleanLiteral"].includes(value.type) ?
-						t.objectProperty(t.stringLiteral(joinKeys(...key)), value) :
-						t.objectMethod("get", t.identifier(joinKeys(...key)), [], t.blockStatement([t.returnStatement(value)]))
-				),
-				t.objectProperty(t.stringLiteral("children"), t.arrowFunctionExpression([t.identifier("_")], t.arrayExpression(children)))
-			])]
-		)
-    }
+	return t.callExpression(
+		t.identifier(tagName),
+		[t.objectExpression([
+			...props.map(
+				({ key, value }) => ["StringLiteral", "BooleanLiteral"].includes(value.type) ?
+					t.objectProperty(t.stringLiteral(joinKeys(...key)), value) :
+					t.objectMethod("get", t.identifier(joinKeys(...key)), [], t.blockStatement([t.returnStatement(value)]))
+			),
+			t.objectProperty(t.stringLiteral("children"), t.arrowFunctionExpression([t.identifier("_")], t.arrayExpression(children)))
+		])]
+	)
     
 }
 
 function withAtrributes(props: { key: t.StringLiteral[]; value: t.Expression }[], node: t.Expression) {
 	return props.reduce((acc, { key, value }) => {
 		switch(true) {
-			case key[0].type == "StringLiteral" && key[0].value == "$": return acc;
+			case key[0].type == "StringLiteral" && ["$", "$c", "$d", "$f", "$n"].includes(key[0].value): return acc;
 			case ["StringLiteral", "BooleanLiteral"].includes(value.type): return t.callExpression(
 				t.memberExpression(acc, t.identifier(btt("set")), true),
 				[value, ...key]
@@ -229,7 +183,7 @@ type childType = t.JSXElement | t.JSXExpressionContainer | t.JSXFragment | t.JSX
 
 function handleChild(child: childType, mode: Mode) {
     switch(child.type) {
-        case "JSXElement": return handleJSXElement(child, mode);
+        case "JSXElement": return handleJSXElement(child);
         case "JSXText": {
             const text = child.value?.trim?.();
             if(!text) return;
@@ -239,7 +193,7 @@ function handleChild(child: childType, mode: Mode) {
             case "JSXEmptyExpression": return;
             default: return ["$f", "$n"].includes(mode) ? child.expression : t.arrowFunctionExpression([t.identifier("_")], child.expression);
         }
-        case "JSXFragment": return handleJSXElement(child, mode);
+        case "JSXFragment": return handleJSXElement(child);
         case "JSXSpreadChild": return;
         default: return;
     }
@@ -269,13 +223,13 @@ function handleAttributeName(name: t.JSXAttribute["name"]) {
 
 function handleAttributeValue(value: t.JSXAttribute["value"], mode: Mode) {
     switch(value?.type) {
-        case "JSXElement": return handleJSXElement(value, mode);
+        case "JSXElement": return handleJSXElement(value);
         case "JSXExpressionContainer": switch(value.expression.type) {
 			case "JSXEmptyExpression": return;
             default: return value.expression;
         };
         case "StringLiteral": return value;
-        case "JSXFragment": return handleJSXElement(value, mode);
+        case "JSXFragment": return handleJSXElement(value);
 		case undefined: return t.booleanLiteral(true);
     }
 }
@@ -319,11 +273,10 @@ function btt(name: string) {
 	return `$btt_${name}`;
 }
 
-type Mode = "$d" | "$c" | "$f" | "$n"
+type Mode = "$d" | "$c" | "$f"
 
 const modes: any = {
 	"$d": true,
 	"$c": true,
 	"$f": true,
-	"$n": true,
 }

@@ -1,4 +1,4 @@
-import { transformJSX } from "@compiler";
+import { compile, transformJSX } from "@compiler";
 import battutaMacros from 'unplugin-macros/vite'
 import { Options } from "unplugin-macros";
 import { battutaFolders } from "./build-folders";
@@ -46,13 +46,13 @@ export function battutaConfig() {
     } as Plugin;
 }
 
-export function battutaJSX(config?: Config["compiler"]) {
+export function battutaCompiler(config?: Config["compiler"]) {
     return {
-        name: "battuta-jsx",
+        name: "battuta-compiler",
         enforce: 'pre',
         transform(code: string, id: string) {
             if (!/\.[jt]sx$/.test(id)) return null;
-            return transformJSX(code);
+            return compile(code, id);
         },
     } as Plugin;
 }
@@ -69,7 +69,7 @@ export default function battutaPlugin(config?: Config) {
         battutaConfig(),
         battutaVirtualRoot(config?.root),
         battutaMacros(config?.macros),
-        battutaJSX(config?.compiler),
+        battutaCompiler(config?.compiler),
         battutaFolders(config?.folders),
         battutaOptimizer(config?.optimizer)
     ] as Plugin[];

@@ -162,9 +162,5 @@ export interface TreeNode {
 
 declare global {
     interface Object extends TreeNode {}
-    var $d: <T>(arg: T) => T;
-    var $c: <T>(arg: T) => T;
-    var $f: <T>(arg: T) => T;
-    var $n: <T>(arg: T) => T;
     var $call: <T extends Array<any>>(...args: T) => T;
 }
