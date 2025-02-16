@@ -16,7 +16,7 @@ export function inferModes(jsCode: string, id: string) {
         }
     }
 
-    const file = project.addSourceFileAtPath(id);
+    const file = project.createSourceFile(id, jsCode, { overwrite: true });
     const jsxOpeningElements: (JsxOpeningElement | JsxSelfClosingElement)[] = [];
     file.getDescendantsOfKind(SyntaxKind.JsxElement).forEach(el => jsxOpeningElements.push(el.getOpeningElement()));
     file.getDescendantsOfKind(SyntaxKind.JsxSelfClosingElement).forEach(el => jsxOpeningElements.push(el));
@@ -43,9 +43,12 @@ function inferMode(opening: JsxOpeningElement | JsxSelfClosingElement): { name: 
     if(opening.getAttribute("$c")) return;
 
     const type = name.getType();
-
+    const symbol = type.getSymbol();
+    const declarations = symbol?.getDeclarations();
     const constructSignatures = type.getConstructSignatures()
-    if(constructSignatures.length > 0) {
+    const isConstructor = declarations?.some(d => d.getKind() === SyntaxKind.ClassDeclaration)
+
+    if(isConstructor || constructSignatures.length > 0) {
         const expression = constructSignatures.map(construct => 
             construct.getParameters().map(param => 
                 param.getName()

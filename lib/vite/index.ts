@@ -1,4 +1,4 @@
-import { compile, transformJSX } from "@compiler";
+import { compile, inferModes, transformJSX } from "@compiler";
 import battutaMacros from 'unplugin-macros/vite'
 import { Options } from "unplugin-macros";
 import { battutaFolders } from "./build-folders";
@@ -46,13 +46,24 @@ export function battutaConfig() {
     } as Plugin;
 }
 
-export function battutaCompiler(config?: Config["compiler"]) {
+export function battutaInferModes(config?: Config["compiler"]) {
     return {
-        name: "battuta-compiler",
+        name: "battuta-infer-modes",
         enforce: 'pre',
         transform(code: string, id: string) {
             if (!/\.[jt]sx$/.test(id)) return null;
-            return compile(code, id);
+            return inferModes(code, id);
+        },
+    } as Plugin;
+}
+
+export function battutaJSX(config?: Config["compiler"]) {
+    return {
+        name: "battuta-jsx",
+        enforce: 'pre',
+        transform(code: string, id: string) {
+            if (!/\.[jt]sx$/.test(id)) return null;
+            return transformJSX(code);
         },
     } as Plugin;
 }
@@ -68,8 +79,9 @@ export default function battutaPlugin(config?: Config) {
     return [
         battutaConfig(),
         battutaVirtualRoot(config?.root),
+        battutaInferModes(config?.compiler),
         battutaMacros(config?.macros),
-        battutaCompiler(config?.compiler),
+        battutaJSX(config?.compiler),
         battutaFolders(config?.folders),
         battutaOptimizer(config?.optimizer)
     ] as Plugin[];
