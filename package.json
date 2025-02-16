@@ -75,7 +75,8 @@
     },
     "scripts": {
         "build": "tsc && vite build",
-        "build:quick": "vite build --mode quick"
+        "build:quick": "vite build --mode quick",
+        "build:nocheck": "vite build"
     },
     "devDependencies": {
         "@tweakpane/core": "^2.0.4",
@@ -84,7 +85,7 @@
         "@types/node": "^22.4.0",
         "@types/three": "^0.169.0",
         "battuta": "0.0.2",
-        "typescript": "^5.5.3",
+        "typescript": "github:BobochD-Brew/TypeScript-dist.git#c09037a02ad6c64f2596fdeb06a1e9759e2fd0b8",
         "vite-plugin-dts": "^4.0.3",
         "vite-plugin-externalize-deps": "^0.8.0"
     },

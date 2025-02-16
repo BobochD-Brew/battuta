@@ -32,7 +32,6 @@ export function inferModes(jsCode: string, id: string) {
         file,
         result,
     }
-
     return result;
 }
 
@@ -63,7 +62,7 @@ function inferMode(opening: JsxOpeningElement | JsxSelfClosingElement): { name: 
             )
         ))}}`;
         if(callSignatures.some(sig => sig.getParameters().length > 1)) return { name: "$f", initializer };
-        if(callSignatures.some(sig => sig.getParameters().some(it => !it.getDeclaredType().isObject()) )) return { name: "$f", initializer };
+        if(callSignatures.some(sig => sig.getParameters().some(it => !it.getDeclaredType().isObject() && !it.getDeclaredType().isAny()) )) return { name: "$f", initializer };
         if(callSignatures.some(sig => sig.getParameters().some(it => {
             const type = it.getDeclaredType();
             const symbol = type.getSymbol();
