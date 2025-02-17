@@ -1,10 +1,10 @@
 import { append, childrenIndex, cleanup, empty, insert, remove } from "@runtime";
 import { createSignal, useEffect } from "@signals";
-import { aspectRatio, height, width } from "../signals/screen";
+import { aspectRatio, height, width } from "./screen";
 import { Clock, Controls, Group, Object3D, PCFSoftShadowMap, PerspectiveCamera, Renderer, Scene, Vector2, WebGLRenderer } from "three";
 import { EffectComposer, OrbitControls, RenderPass } from "three/examples/jsm/Addons.js";
 import { createContext } from "../contexts";
-import { onCleanup } from "../hooks";
+import { onCleanup } from "./tree";
 
 Object3D.prototype[insert] = function(child: any){
     this.add(child);

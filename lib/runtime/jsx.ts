@@ -26,6 +26,10 @@ objectPrototype[insert] = function () {
     return this;
 }
 
+objectPrototype[empty] = function () {
+    return undefined as any;
+}
+
 // HEAVY
 // objectPrototype[remove] = function() {
 //     // const subs = this[listeners]["remove"];
@@ -92,8 +96,8 @@ Object.defineProperty(objectPrototype, listeners, {
 });
 
 // HEAVY
-function appendTo(target: TreeNode, childs: TreeChild[], _parent: TreeNode, _index = { v: -1 }): TreeNode | null {
-    let result = null;
+function appendTo(target: TreeNode, childs: TreeChild[], _parent: TreeNode, _index = { v: -1 }): TreeNode | undefined {
+    let result = undefined;
     for(let i = 0; i < childs.length; i++) {
         const child = childs[i];
         if (typeof child === "function") {
@@ -106,11 +110,12 @@ function appendTo(target: TreeNode, childs: TreeChild[], _parent: TreeNode, _ind
                 _parent[context] ??= currentContext();
                 newParent[context] = {
                     ..._parent[context],
-                    [insert]: (..._childs: any) => appendTo(target, _childs, newParent, index),
+                    [insert]: (..._childs: any) => insertTarget = appendTo(target, _childs, newParent, { v: target[childrenIndex](insertTarget) + 1 }),
                     [parent]: newParent,
                 }
                 contextStack.push(newParent[context]);
-                const prevChild = appendTo(target, [child()], newParent, index)!;
+                let insertTarget: TreeNode | undefined;
+                const prevChild = insertTarget = appendTo(target, [child()], newParent, index)!;
                 contextStack.pop();
                 result ??= prevChild;
 
@@ -124,7 +129,9 @@ function appendTo(target: TreeNode, childs: TreeChild[], _parent: TreeNode, _ind
             const addedChild = appendTo(target, child, _parent,  _index);
             result ??= addedChild;
         } else {
-            const addedChild = target[insert](child ?? target[empty](), _index.v);
+            const childToAdd = child ?? target[empty]();
+            if(childToAdd == undefined) continue;
+            const addedChild = target[insert](childToAdd, _index.v);
             if(_index.v > -1) _index.v++;
             addedChild[context] = _parent[context];
             // _parent[on]("remove", () => addedChild[remove]())

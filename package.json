@@ -1,7 +1,7 @@
 {
     "name": "battuta",
     "private": false,
-    "version": "0.0.15-modeless2",
+    "version": "0.0.15-modeless3",
     "type": "module",
     "license": "MIT",
     "bin": {
@@ -17,15 +17,20 @@
         "./compiler": "./dist/compiler.js",
         "./optimizer": "./dist/optimizer.js",
         "./runtime": "./dist/runtime.js",
-        "./three": "./dist/three.js",
         "./dom": "./dist/dom.js",
         "./signals": "./dist/signals.js",
         "./contexts": "./dist/contexts.js",
-        "./hooks": "./dist/hooks.js",
-        "./tweak": "./dist/tweak.js",
-        "./signals/screen": "./dist/signals/screen.js",
         "./jsx-runtime": "./dist/jsx-runtime.js",
-        "./jsx-dev-runtime": "./dist/jsx-dev-runtime.js"
+        "./jsx-dev-runtime": "./dist/jsx-dev-runtime.js",
+        "./utils/animate": "./dist/utils.animate.js",
+        "./utils/dev": "./dist/utils.dev.js",
+        "./utils/lazy": "./dist/utils.lazy.js",
+        "./utils/screen": "./dist/utils.screen.js",
+        "./utils/signals": "./dist/utils.signals.js",
+        "./utils/structure": "./dist/utils.structure.js",
+        "./utils/three": "./dist/utils.three.js",
+        "./utils/tree": "./dist/utils.tree.js",
+        "./utils/tweak": "./dist/utils.tweak.js"
     },
     "typesVersions": {
         "*": {
@@ -44,9 +49,6 @@
             "runtime": [
                 "dist/runtime.d.ts"
             ],
-            "three": [
-                "dist/three.d.ts"
-            ],
             "dom": [
                 "dist/dom.d.ts"
             ],
@@ -56,26 +58,45 @@
             "contexts": [
                 "dist/contexts.d.ts"
             ],
-            "hooks": [
-                "dist/hooks.d.ts"
-            ],
-            "tweak": [
-                "dist/tweak.d.ts"
-            ],
-            "signals/screen": [
-                "dist/signals/screen.d.ts"
-            ],
             "jsx-runtime": [
                 "dist/jsx-runtime.d.ts"
             ],
             "jsx-dev-runtime": [
                 "dist/jsx-dev-runtime.d.ts"
+            ],
+            "utils/animate": [
+                "dist/utils.animate.d.ts"
+            ],
+            "utils/dev": [
+                "dist/utils.dev.d.ts"
+            ],
+            "utils/lazy": [
+                "dist/utils.lazy.d.ts"
+            ],
+            "utils/screen": [
+                "dist/utils.screen.d.ts"
+            ],
+            "utils/signals": [
+                "dist/utils.signals.d.ts"
+            ],
+            "utils/structure": [
+                "dist/utils.structure.d.ts"
+            ],
+            "utils/three": [
+                "dist/utils.three.d.ts"
+            ],
+            "utils/tree": [
+                "dist/utils.tree.d.ts"
+            ],
+            "utils/tweak": [
+                "dist/utils.tweak.d.ts"
             ]
         }
     },
     "scripts": {
         "build": "tsc && vite build",
         "build:quick": "vite build --mode quick",
+        "build:quick-types": "vite build --mode quick-types",
         "build:nocheck": "vite build"
     },
     "devDependencies": {
