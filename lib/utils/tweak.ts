@@ -1,6 +1,7 @@
-import { createSignal, useDebounced, useEffect } from '@signals';
+import { createSignal, useEffect } from '@signals';
 import {BindingParams, FolderApi, Pane} from 'tweakpane';
-import { onCleanup } from '../hooks';
+import { onCleanup } from './tree';
+import { useDebounced } from './signals';
 
 const folder = Symbol("folder");
 const pane = new Pane({ title: "Tweaks" });

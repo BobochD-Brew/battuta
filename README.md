@@ -13,12 +13,11 @@ then run it with `npm run dev`
 
 - [Setup](#setup-a-new-project)
 - [JSX](#jsx)
-    - [Default Mode](#default-mode---d)
-    - [Class Mode](#class-mode---c)
-    - [Function Mode](#function-mode---f)
-    - [Mixed Mode](#mixed-mode---n)
+    - [DOM](#dom)
+    - [Components](#components)
+    - [Constructors](#constructors)
+    - [Functions](#functions)
 - [Contexts](#contexts)
-- [Hooks](#some-hooks)
 - [CLI](#cli)
 - [Vite](#use-with-vite)
     - [All In One](#all-in-one-plugin)
@@ -32,77 +31,84 @@ then run it with `npm run dev`
 
 ## JSX
 
-the JSX compiler use a mode system that change how jsx expressions are compiled.
-to switch between modes you can use `$` utils like this:
+JSX expressions are compiled differently based on the type of tag used
 
+### DOM
+
+This expression:
 ```tsx
-// as a separate tag
-<$f> {/* Function Mode */}
-    <Component>
-        <Child/>  {/* affected */}
-        {() => <Child/>} {/* not affected */}
-    </Component>
-</$f>
-
-// inside a tag
-<Component $f>
-    <Child/>  {/* affected */}
-    {() => <Child/>} {/* not affected */}
-</Component>
+<div style:color={color()}>
+    {value()}
+</div>
+```
+Transforms to:
+```tsx
+createElement("div")
+    [assign](() => color(), "style", "color")
+    [append](() => value())
 ```
 
-> I hate to have to do it this way but it's the best I found yet
+### Components
 
-### Default Mode - $d
-
-the default mode compile JSX expressions to match the react component apis, as solid it use accesors for props
-
+Given
 ```tsx
-<Component key1={value()} key2="value">
-    <div/>
-    <div/>
-</Component>
-
-// turns into
-const createElement = document.bind(document);
-
-Component({
-    get key1() { return value() },
-    key2: "value",
-    children: () => [ createElement("div"), createElement("div") ]
-})
+function Component(props) {
+    return <div>{props.value}</div>
+}
+```
+This expression:
+```tsx
+<Component value={value()}>
+```
+Transforms to:
+```tsx
+Component({ get value() { return value() } })
 ```
 
-### Class Mode - $c
+### Constructors
 
-the class mode allow to use already existing classes in JSX and compose them
-
+Given
 ```tsx
-import { create, appendMultiple, set, assign, call } from "battuta/runtime"
-
-const group = <THREE.Group $c>
-    <THREE.PointLight
-        $c={[0xffff00, 2, 100]}
-        color:set={$call(color())}
-        position:y={positionY()}
-        position:x={1}
-        castShadow
-    />
-</THREE.Group>
-
-// turns into
-
-const group = THREE.Group[create]() // by default -> new THREE.Group()
-    [appendMultiple](
-        THREE.PointLight[create](0xffff00, 2, 100)
-            [call](() => color(), "color", "set") // calls light.color.set(color()) when color get updated
-            [assign](() => position(), "position", "y")
-            [set](1, "position", "x")
-            [set](true, "castShadow")
-    )
+class A {
+    prop = 0;
+    constructor(arg_2);
+    constructor(arg_1, arg_2, arg_3) {}
+}
+```
+Those expressions:
+```tsx
+<A arg_2={value_2()} prop={value_3()}>
+<A arg_2={value_2()} arg_3={value_4()} prop={value_3()}>
+```
+Transform to:
+```tsx
+A[create](value_2())
+    [assign](() => value_3(), "prop")
+A[create](undefined, value_2(), value_4())
+    [assign](() => value_3(), "prop")
 ```
 
-for this to work some methods need to be implmented on the parent prototypes, by default Object instances define default implementations that can be overwriten, at least `empty`, `childrenIndex`, `insert` and `remove` need to be implemented, those last two should never be called directly, instead use the `useAppend` & `useRemove` hooks or the `append` and `cleanup` methods
+> The props names are matched with the args names
+
+### Functions
+
+Given
+```tsx
+function F(first: string, second: number) {}
+```
+Those expressions:
+```tsx
+<F first={value_1()} second={value_2()}>
+<F second={value_2()} prop={value_3()}>
+```
+Transform to:
+```tsx
+F(value_1(), value_2())
+F(undefined, value_2())
+    [assign](() => value_3(), "prop")
+```
+
+for this to work some methods need to be implemented on the parent prototypes, by default Object instances define default implementations that can be overwriten, at least `insert` and `remove` need to be implemented
 
 this is an example in the case of threejs
 
@@ -110,67 +116,56 @@ this is an example in the case of threejs
 import { append, remove, childrenIndex, empty } from "battuta/runtime";
 import { Object3D, Group } from "three";
 
+// required 
 Object3D.prototype[insert] = function(child: any, index?: number){
     this.add(child);
     return this;
 }
 
+// required 
 Object3D.prototype[remove] = function(){
-    return this.removeFromParent();
+    this.removeFromParent();
+    return this;
 }
 
+// not needed if the childrens order doesn't matter 
 Object3D.prototype[childrenIndex] = function(child){
-    return -1;
+    return this.children.indexOf(child);
 }
 
+// not needed if the childrens order doesn't matter 
 Object3D.prototype[empty] = function(){
     return new Group();
 }
-```
 
-### Function Mode - $f
+// implemented by default, can be overwriten
+Object3D.prototype[create] = function (...props) {
+    return Reflect.construct(this as any, props);
+}
 
-the function mode allow to compose functions with each other
+// implemented by default, can be overwriten
+Object3D.prototype[set] = function (value, ...keys) {
+    const key = keys.pop()!;
+    resolveObj(this, keys)[key] = value;
+    return this;
+}
 
-```tsx
-const switchCase = <t.switchCase $f>
-    {value}
-    <array>
-        <t.returnStatement>
-            {result}
-        </t.returnStatement>
-    </array>
-</t.switchCase>
+// implemented by default, can be overwriten
+Object3D.prototype[assign] = function (value, ...keys) {
+    const key = keys.pop()!;
+    const target = resolveObj(this, keys);
+    useEffect(() => target[key] = value());
+    return this;
+}
 
-// turns into
-
-const switchStatment = t.switchCase(value, [ t.returnStatment(result) ])
-```
-
-### Mixed Mode - $n
-
-the mixed mode is a mix between the class mode and the function mode
-
-```tsx
-const boxMesh = <Mesh $n
-    castShadow
-    receiveShadow
->
-    <BoxGeometry/>
-    <MeshPhongMaterial
-        color:set={$call(color())}
-    />
-</Mesh>
-
-// turns into
-
-const boxMesh = Mesh[create]( 
-    BoxGeometry[create](), // this return new BoxGeometry()
-    MeshPhongMaterial[create]()
-        [call](() => color(), "color", "set")
-)
-    [set](true, "castShadow")
-    [set](true, "receiveShadow")
+// implemented by default, can be overwriten
+Object3D.prototype[call] = function (value, ...keys) {
+    const key = keys.pop()!;
+    const target = resolveObj(this, keys);
+    const f = target[key].bind(target);
+    useEffect(() => f(...value()));
+    return this;
+}
 ```
 
 ## Contexts
@@ -199,128 +194,17 @@ function Component() {
 
     const { getValue, setValue } = useValue();
 
-    const child1 = <Child/> // run outside the EventsProvider so can't access the context
-    const child2 = () => <Child/> // run inside the EventsProvider
-
-    doSomething(<Child/>) // run outside the doSomething function
+    const child1 = <Child/>
+    const child2 = () => <Child/>
 
     return <EventsProvider>
-        <Child/>
-        {child1}
-        {child2}
+        <Child/> {/* run inside the EventsProvider */}
+        {child1} {/* run outside the EventsProvider */}
+        {child2} {/* run inside the EventsProvider */}
     <EventsProvider>
 }
 
 ```
-
-## Some Hooks
-
-quick examples of some builtin hooks
-
-```tsx
-
-function Component() {
-
-    const add = useAppend();
-    // append the child to the closest real element
-    // derivate from the current context
-    // (more on this bellow) 
-    add(<Child />) 
-
-    const remove = useRemove();
-    remove(); // remove this component & the elements bellow the current context
-
-    onCleanup(() => {
-        // component has been removed
-        // atm there's no way to unmount -> remount
-    })
-
-    // useEffect can be used outside of components and JSX
-    useEffect(() => {
-        reactive() + 1;
-    })
-
-    useDebounced(() => {
-        reactive() + 1;
-    }, 1000)
-
-    // for now only inside the Canvas helper in battuta/three
-
-    const { camera, scene } = useScene();
-    useFrame((delta) => {})
-
-    // TweakPanel wrappers
-    const [getValue, setValue] = createTweakSignal("#ffffff");
-    useMonitor(() => Date.now())
-}
-```
-
-Even tho there's no virtual dom we still has virtual relations & contexts. For example in this situation
-
-```tsx
-const Component = () => () => () => () => () => {
-    return <h1>Hello</h1>
-}
-
-const div = <div/>
-```
-
-the real tree looks like
-
-```
-- div
-|---- h1
-```
-
-tho in relatity the relations look like this
-
-```
-- div
-|---- f1
-|   |---- f2
-|       |---- f3
-|           |---- f4
-|               |---- f5
-|-------------------|---- h1
-```
-
-the real tree is still composed just of the div and the h1 elements but the intermediary contexts exist (if consumed) so here each element are bound to their parent.
-
-one thing to keep in mind is the virtual element exist only if the real elements received an uncalled function, this happens by default to components in the normal mode as their children prop is a function but for other modes it is not the case, so for example here
-
-```tsx
-function Child() {
-    return <h1/>
-}
-
-function Parent() {
-    return <div>
-        <Child/>
-    </div>
-}
-```
-
-here two uncommon things happen, first here's the relation map of this code
-
-```
-- Parent (virtual, assuming it was used in a default mode component)
-|---- div
-|   |---- h1
-|---- Child
-```
-
-You can see the the child function don't appear where it should, this happens because the compilation result here is 
-
-
-```ts
-function Parent() {
-    return createElement(div)[append](Child())
-}
-```
-
-the div only receive the result of the child which is the second div so it never knows about the Child context, this generally don't cause issues as the div don't hold any special context.
-
-the second uncommon behavior is that if you have a `onCleanup` hook in your Child the Child is gonna consume from the parenting context, which in this case is the Parent element, this doesn't cause issues unless you're directly removing the div separatly using the `cleanup` method, in this case the div will be removed as well as the h1 but the `onCleanup` hook won't run for the child as it's bound to the Parent component
 
 ## CLI
 
@@ -353,6 +237,7 @@ export default defineConfig({
         battutaPlugin({
             // options for the bun macros plugin
             macros: Options,
+            root: "src/main.tsx",
             optimizer: {
                 strings: true,
                 functions: true,
@@ -370,10 +255,11 @@ the `battutaJSX` plugin handle the JSX transformations
 
 ```ts
 
-import { battutaJSX } from "battuta/vite";
+import { battutaJSX, battutaInferModes } from "battuta/vite";
 
 export default defineConfig({
     plugins: [
+        battutaInferModes(),
         battutaJSX()
     ]
 })
