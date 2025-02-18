@@ -24,7 +24,7 @@ export function battutaVirtualRoot(opts?: RootConfig) {
                 const url = req.url?.slice(1)?.replace(".html", "");
                 const id = url ? `${url}.html` : "index.html";
                 if (!contents[id]) return next();
-                const content = existsSync(`./${id}`) ? readFileSync(`./${id}`, "utf-8") : contents[id];
+                const content = existsSync(`./${id}`) ? readFileSync(`./${id}`, "utf-8") : dev(contents[id]);
                 res.setHeader('Content-Type', 'text/html')
                 res.statusCode = 200;
                 res.end(content)
@@ -41,6 +41,10 @@ export function battutaVirtualRoot(opts?: RootConfig) {
 type Key = string | symbol | number;
 function map<T extends Key, P, R extends Key, G>(obj: Record<T, P>, f: (key: T, value: P) => [R, G]): Record<R, G> {
     return Object.fromEntries(Object.entries(obj).map(([k, v]) => f(k as T, v as P))) as any;
+}
+
+function dev(html: string) {
+    return html.replace("<head>", `<head><script type="module" src="/@vite/client"></script>`)
 }
 
 const defaultHTML = (root: string) => `
