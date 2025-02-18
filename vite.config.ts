@@ -31,6 +31,12 @@ readdirSync("./lib/utils").forEach(file => {
     entries[`utils/${name}`] = `./lib/utils/${file}`;
 })
 
+readdirSync("./lib/macros").forEach(file => {
+    if (!/\.macro\.ts$/.test(file)) return;
+    const name = file.split(".")[0];
+    entries[`macros/${name}.macro`] = `./lib/macros/${file}`;
+})
+
 packageJson.exports = Object.entries(entries).reduce((acc, [k, v]) => {
     const path = `./${k}`;
     acc[path] = `./${dist}/${outName(k)}.js`;

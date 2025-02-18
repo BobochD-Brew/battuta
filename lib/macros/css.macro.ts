@@ -20,7 +20,7 @@ export function css(this: any, css: TemplateStringsArray, ..._args: any[]): Reco
 
     const updatedCss = root.toString();
     // @ts-ignore
-    if (import.meta.env && !import.meta.env.DEV) {
+    if (!process.env.HOST_DEV) {
         const outputDir = '.temp';
         const fileName = `${generateRandomFileName()}.css`;
         const outputPath = path.join(process.cwd(), outputDir, fileName);

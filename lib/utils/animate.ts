@@ -1,4 +1,4 @@
-import { untrack } from "@signals";
+import { createSignal, untrack, useEffect } from "@signals";
 
 export const Ease = {
     linear: (t: number) => t,
@@ -9,6 +9,16 @@ export const Ease = {
     outCubic: (t: number) => (--t) * t * t + 1,
     inOutCubic: (t: number) => t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1
 };
+
+export function createTransition<T>(f: () => T, anim: (current: T, next: T, set: (v: T) => void) => any) {
+    const [value, setValue] = createSignal<T>(undefined as any);
+    useEffect(() => {
+        const newValue = f();
+        anim(untrack(value), newValue, setValue);
+        // TODO handle cancelation
+    });
+    return value;
+}
 
 export function animate(get: () => number, set: (v: number) => void, to: number, duration: number, ease = Ease.linear) {
     let start = performance.now();

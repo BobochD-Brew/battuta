@@ -1,23 +1,18 @@
 import { compile, inferModes, transformJSX } from "@compiler";
 import battutaMacros from 'unplugin-macros/vite'
 import { Options } from "unplugin-macros";
-import { battutaFolders } from "./build-folders";
+import { battutaFolders, FoldersConfig } from "./build-folders";
 import { Plugin } from "vite";
 import { optimize } from "@optimizer";
-import { battutaVirtualRoot } from "./virtual-root";
+import { battutaVirtualRoot, RootConfig } from "./virtual-root";
 
 type Config = {
     macros?: Options,
-    compiler?: {},
-    folders?: {
-        temp: string,
-        move: string,
-    },
-    optimizer?: {
-        strings?: boolean;
-        functions?: boolean;
-    },
-    root?: string,
+    modes?: ModesConfig,
+    jsx?: JSXConfig,
+    optimizer?: OptimizerConfig,
+    root?: RootConfig,
+    folders?: FoldersConfig,
 }
 
 export {
@@ -46,7 +41,8 @@ export function battutaConfig() {
     } as Plugin;
 }
 
-export function battutaInferModes(config?: Config["compiler"]) {
+type ModesConfig = {}
+export function battutaInferModes(config?: ModesConfig) {
     return {
         name: "battuta-infer-modes",
         enforce: 'pre',
@@ -57,7 +53,8 @@ export function battutaInferModes(config?: Config["compiler"]) {
     } as Plugin;
 }
 
-export function battutaJSX(config?: Config["compiler"]) {
+type JSXConfig = {}
+export function battutaJSX(config?: JSXConfig) {
     return {
         name: "battuta-jsx",
         enforce: 'pre',
@@ -68,7 +65,11 @@ export function battutaJSX(config?: Config["compiler"]) {
     } as Plugin;
 }
 
-export function battutaOptimizer(config?: Config["optimizer"]) {
+type OptimizerConfig = {
+    strings?: boolean;
+    functions?: boolean;
+}
+export function battutaOptimizer(config?: OptimizerConfig) {
     return {
         name: "battuta-optimizer",
         renderChunk: (chunk) => optimize(chunk, config)
@@ -79,9 +80,9 @@ export default function battutaPlugin(config?: Config) {
     return [
         battutaConfig(),
         battutaVirtualRoot(config?.root),
-        battutaInferModes(config?.compiler),
+        battutaInferModes(config?.modes),
         battutaMacros(config?.macros),
-        battutaJSX(config?.compiler),
+        battutaJSX(config?.jsx),
         battutaFolders(config?.folders),
         battutaOptimizer(config?.optimizer)
     ] as Plugin[];

@@ -1,7 +1,7 @@
 {
     "name": "battuta",
     "private": false,
-    "version": "0.0.15-modeless3",
+    "version": "0.0.15-modeless4",
     "type": "module",
     "license": "MIT",
     "bin": {
@@ -30,7 +30,8 @@
         "./utils/structure": "./dist/utils.structure.js",
         "./utils/three": "./dist/utils.three.js",
         "./utils/tree": "./dist/utils.tree.js",
-        "./utils/tweak": "./dist/utils.tweak.js"
+        "./utils/tweak": "./dist/utils.tweak.js",
+        "./macros/css.macro": "./dist/macros.css.macro.js"
     },
     "typesVersions": {
         "*": {
@@ -90,6 +91,9 @@
             ],
             "utils/tweak": [
                 "dist/utils.tweak.d.ts"
+            ],
+            "macros/css.macro": [
+                "dist/macros.css.macro.d.ts"
             ]
         }
     },
@@ -121,7 +125,7 @@
         "terser": "^5.31.6",
         "three": "^0.169.0",
         "tweakpane": "^4.0.4",
-        "unplugin-macros": "github:BobochD-Brew/unplugin-macros.git#6b6e4a810e781baf2b5778ad7276b8948713c6a3",
+        "unplugin-macros": "github:BobochD-Brew/unplugin-macros.git#0d7dc8bfc26bcc86a0bf8e40929994eaa6ca339e",
         "vite": "^5.4.1"
     }
 }
