@@ -14,7 +14,7 @@ export default function optimizeStrings(jsCode: string) {
     const stringLiterals: { [key: string]: { count: number; name: string } } = {};
 
     const handleString = (value: string) => {
-        if (value in stringLiterals) {
+        if (stringLiterals[value]?.count) {
             stringLiterals[value].count++;
         } else {
             stringLiterals[value] = { count: 1, name: generateRandomName(value) };
@@ -26,6 +26,7 @@ export default function optimizeStrings(jsCode: string) {
             handleString(path.node.value);
         },
         ObjectProperty(path) {
+            if(path.node.computed) return;
             const key = path.node.key;
             if(key.type !== "Identifier") return;
             handleString(key.name);
@@ -62,6 +63,7 @@ export default function optimizeStrings(jsCode: string) {
                 })
             },
             ObjectProperty(path) {
+                if(path.node.computed) return;
                 const key = path.node.key;
                 if(key.type !== "Identifier") return;
                 handleReplacement(key.name, path, (name) => {

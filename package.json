@@ -1,7 +1,7 @@
 {
     "name": "battuta",
     "private": false,
-    "version": "0.0.15-modeless8",
+    "version": "0.0.15-modeless10",
     "type": "module",
     "license": "MIT",
     "bin": {
@@ -108,7 +108,6 @@
         "build:nocheck": "vite build"
     },
     "devDependencies": {
-        "@tweakpane/core": "^2.0.4",
         "@types/babel__generator": "^7.6.8",
         "@types/babel__traverse": "^7.20.6",
         "@types/node": "^22.4.0",
@@ -129,6 +128,7 @@
         "terser": "^5.31.6",
         "three": "^0.169.0",
         "tweakpane": "^4.0.4",
+        "@tweakpane/core": "^2.0.4",
         "unplugin-macros": "github:BobochD-Brew/unplugin-macros.git#0d7dc8bfc26bcc86a0bf8e40929994eaa6ca339e",
         "vite": "^5.4.1"
     }
