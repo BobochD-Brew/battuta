@@ -1,7 +1,7 @@
 {
     "name": "battuta",
     "private": false,
-    "version": "0.0.15-modeless7",
+    "version": "0.0.15-modeless8",
     "type": "module",
     "license": "MIT",
     "bin": {
@@ -31,7 +31,8 @@
         "./utils/three": "./dist/utils.three.js",
         "./utils/tree": "./dist/utils.tree.js",
         "./utils/tweak": "./dist/utils.tweak.js",
-        "./macros/css.macro": "./dist/macros.css.macro.js"
+        "./macros/css.macro": "./dist/macros.css.macro.js",
+        "./macros/glsl.macro": "./dist/macros.glsl.macro.js"
     },
     "typesVersions": {
         "*": {
@@ -94,6 +95,9 @@
             ],
             "macros/css.macro": [
                 "dist/macros.css.macro.d.ts"
+            ],
+            "macros/glsl.macro": [
+                "dist/macros.glsl.macro.d.ts"
             ]
         }
     },
