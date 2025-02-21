@@ -11,7 +11,7 @@ export function glsl(this: any, code: TemplateStringsArray, ..._args: any[]): (o
         .filter((line: string) => line.trim())
         .join("")
         .replaceAll(/\s+/g, " ")
-        .replaceAll(/(?<=[;\*\^\-\/={}\)\(+,&]|>>|>=|<=|<<|\s<|\s>)\s|\s(?=[;\*\^\-\/={}\)\(+,&]|>>|>=|<=|<<|<\s|>\s)/g, "")
+        .replaceAll(/(?<=[;\*\^\-\/={}\)\(+,&?:]|>>|>=|<=|<<|\s<|\s>)\s|\s(?=[;\*\^\-\/={}\)\(+,&?:]|>>|>=|<=|<<|<\s|>\s)/g, "")
         .trim()
     return new String(`(opts={}) => Object.entries(opts).reduce((p, [k, v]) => p.replaceAll("<"+k+">", v), \`${minified}\`)`) as any;
 }

@@ -27,12 +27,14 @@ const outName = (name: string) => name.split("/").join(".");
 
 readdirSync("./lib/utils").forEach(file => {
     if (!/\.tsx?$/.test(file)) return;
+    if (file.startsWith("_")) return;
     const name = file.split(".")[0];
     entries[`utils/${name}`] = `./lib/utils/${file}`;
 })
 
 readdirSync("./lib/macros").forEach(file => {
     if (!/\.macro\.ts$/.test(file)) return;
+    if (file.startsWith("_")) return;
     const name = file.split(".")[0];
     entries[`macros/${name}.macro`] = `./lib/macros/${file}`;
 })

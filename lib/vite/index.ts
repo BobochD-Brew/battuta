@@ -53,14 +53,14 @@ export function battutaInferModes(config?: ModesConfig) {
     } as Plugin;
 }
 
-type JSXConfig = {}
+type JSXConfig = { dom?: string }
 export function battutaJSX(config?: JSXConfig) {
     return {
         name: "battuta-jsx",
         enforce: 'pre',
         transform(code: string, id: string) {
             if (!/\.[jt]sx$/.test(id)) return null;
-            return transformJSX(code);
+            return transformJSX(code, config?.dom);
         },
     } as Plugin;
 }

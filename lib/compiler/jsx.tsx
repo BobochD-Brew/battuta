@@ -6,7 +6,7 @@ import { svgTags, tags } from './tags';
 const traverse = (traverseRaw as any).default as typeof traverseRaw;
 const generate = (generateRaw as any).default as typeof generateRaw;
 
-export function transformJSX(jsCode: string) {
+export function transformJSX(jsCode: string, dom = "battuta/dom") {
     const ast = parser.parse(jsCode, {
         sourceType: 'module',
         plugins: ['jsx', 'typescript', 'decorators'],
@@ -17,8 +17,8 @@ export function transformJSX(jsCode: string) {
         JSXFragment: (path) => {path.replaceWith(handleJSXElement(path.node) || t.nullLiteral())},
     })
 
-    addImport(ast, "createElement", "battuta/dom");
-    addImport(ast, "createSVGElement", "battuta/dom");
+    addImport(ast, "createElement", dom);
+    addImport(ast, "createSVGElement", dom);
     addImport(ast, "create", "battuta/runtime");
     addImport(ast, "assign", "battuta/runtime");
     addImport(ast, "set", "battuta/runtime");

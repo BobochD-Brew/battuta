@@ -1,7 +1,7 @@
 {
     "name": "battuta",
     "private": false,
-    "version": "0.0.15-modeless10",
+    "version": "0.0.16",
     "type": "module",
     "license": "MIT",
     "bin": {
@@ -123,13 +123,21 @@
         "@babel/traverse": "^7.25.3",
         "@babel/types": "^7.25.2",
         "commander": "^12.1.0",
-        "postcss": "^8.4.41",
         "ts-morph": "^25.0.1",
-        "terser": "^5.31.6",
-        "three": "^0.169.0",
-        "tweakpane": "^4.0.4",
-        "@tweakpane/core": "^2.0.4",
+        "postcss": "^8.4.41",
         "unplugin-macros": "github:BobochD-Brew/unplugin-macros.git#0d7dc8bfc26bcc86a0bf8e40929994eaa6ca339e",
-        "vite": "^5.4.1"
+        "vite": "^5.4.1",
+        "tweakpane": "^4.0.4",
+        "terser": "^5.31.6",
+        "@tweakpane/core": "^2.0.4"
+    },
+    "optionalDependencies": {},
+    "peerDependencies": {
+        "three": "*"
+    },
+    "peerDependenciesMeta": {
+        "three": {
+            "optional": true
+        }
     }
 }

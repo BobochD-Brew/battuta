@@ -42,6 +42,14 @@ export function useFrame(update: (delta: number) => void) {
     return dispose;
 }
 
+const loaderInstance = Symbol("loader-instance")
+export function useLoader<T>(Loader: new () => { load: (url: string, callback: (v: T) => any) => any }, url: string) {
+    const [texture, setTexture] = createSignal<T>(null as any);
+    const loader = (Loader as any)[loaderInstance] ??= new Loader();
+    loader.load(url, (v: T) => setTexture(v));
+    return texture;
+}
+
 export function Canvas({
     children,
     camera,
