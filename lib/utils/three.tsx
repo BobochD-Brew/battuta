@@ -1,10 +1,10 @@
 import { append, childrenIndex, cleanup, empty, insert, remove } from "@runtime";
 import { createSignal, useEffect } from "@signals";
-import { aspectRatio, height, width } from "../signals/screen";
+import { aspectRatio, height, width } from "./screen";
 import { Clock, Controls, Group, Object3D, PCFSoftShadowMap, PerspectiveCamera, Renderer, Scene, Vector2, WebGLRenderer } from "three";
 import { EffectComposer, OrbitControls, RenderPass } from "three/examples/jsm/Addons.js";
 import { createContext } from "../contexts";
-import { onCleanup } from "../hooks";
+import { onCleanup } from "./tree";
 
 Object3D.prototype[insert] = function(child: any){
     this.add(child);
@@ -42,6 +42,14 @@ export function useFrame(update: (delta: number) => void) {
     return dispose;
 }
 
+const loaderInstance = Symbol("loader-instance")
+export function useLoader<T>(Loader: new () => { load: (url: string, callback: (v: T) => any) => any }, url: string) {
+    const [texture, setTexture] = createSignal<T>(null as any);
+    const loader = (Loader as any)[loaderInstance] ??= new Loader();
+    loader.load(url, (v: T) => setTexture(v));
+    return texture;
+}
+
 export function Canvas({
     children,
     camera,
@@ -56,6 +64,7 @@ export function Canvas({
 }: any) {
 
     camera ??= new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = -5;
     scene ??= new Scene();
     renderer ??= new WebGLRenderer({ antialias });
     composer ??= new EffectComposer(renderer);

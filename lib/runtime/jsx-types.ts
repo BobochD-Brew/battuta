@@ -33,6 +33,13 @@ type WithFunction<T> = {
     [K in keyof T]: T[K] extends ((...args: any) => any) ? (Parameters<T[K]> | T[K]) : T[K];
 }
 
+type ParamsToObj<T> = {
+    // this is only available in this typescript version https://github.com/BobochD-Brew/TypeScript
+    // https://github.com/microsoft/TypeScript/issues/44939
+    // @ts-ignore 
+    -readonly [K in keyof T["$byName"]]?: T["$byName"][K];
+}
+
 export namespace JSX {
     // @ts-ignore
     export interface IntrinsicElements extends WithSvg {
@@ -59,25 +66,29 @@ export namespace JSX {
     export interface ElementChildrenAttribute {
         children: {};
     }
-    export type LibraryManagedAttributes<C, P> = (C extends new (...args: any) => infer U ? Partial<Omit<WithFunction<U>, "children">> : {}) &
-        (C extends (...args: any) => any ? ({ children?: Parameters<C>[number] | Parameters<C>[number][] }) : {})
-        & {
-            $c?: (C extends new (...args: any) => any ? ConstructorParameters<C> : []) | boolean;
-        } & {
-            $n?: boolean,
-            $d?: boolean,
-            $f?: boolean,
-        } & (C extends new (...args: any) => infer U ? {
+    export type LibraryManagedAttributes<C, P> = {}
+        // modes overrides
+        & { $c?: boolean, $d?: boolean, $f?: boolean }
+        // instance members
+        & (C extends new (...args: any) => infer U ? Partial<Omit<WithFunction<U>, "children">> : {})
+        // instance deep members
+        & (C extends new (...args: any) => infer U ? {
             [K in DeepPairs<U>]?: K extends `${infer Q}:${infer T}` ? (
                 // @ts-ignore
                 U[Q][T] extends ((...args: any) => any) ? (Parameters<U[Q][T]> | U[Q][T]) : U[Q][T]
             ) : never;
-        } : C extends (...args: any) => infer U ? {
+        } : {}) 
+        // constructor args
+        & (C extends new (...args: any) => any ? ParamsToObj<ConstructorParameters<C>> : {})
+        // result members
+        & (C extends (...args: any) => infer U ? Partial<Omit<WithFunction<U>, "children">> : {})
+        // result deep members
+        & (C extends (...args: any) => infer U ? {
             [K in DeepPairs<U>]?: K extends `${infer Q}:${infer T}` ? (
                 // @ts-ignore
                 U[Q][T] extends ((...args: any) => any) ? (Parameters<U[Q][T]> | U[Q][T]) : U[Q][T]
             ) : never;
-        } : {
-
-        })
+        } : {})
+        // function args
+        & (C extends (...args: any) => any ? ParamsToObj<Parameters<C>> : {})
 }

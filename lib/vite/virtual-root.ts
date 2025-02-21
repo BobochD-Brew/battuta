@@ -1,24 +1,30 @@
 import { existsSync, readFileSync } from "fs";
+import path from "path";
 import { Plugin } from "vite";
 
-export function battutaVirtualRoot(root?: string) {
-    const defaultContent = defaultHTML(root ?? "/src/main.tsx");
+export type RootConfig = { pages: Record<string, string> }
+export function battutaVirtualRoot(opts?: RootConfig) {
+    const pages = opts?.pages || { "index": "/src/main.tsx" };
+    const htmlMapping = map(pages, (k, v) => [`${k}.html` as string, v]);
+    const contents = map(htmlMapping, (k, v) => [k, defaultHTML(v)]);
     
     return {
         name: "battuta-virtual-root",
         enforce: "pre",
         load: (id) => {
-            if(id !== "index.html") return;
-            const content = existsSync("./index.html") ? readFileSync("./index.html", "utf-8") : defaultContent;
+            if(!contents[id]) return;
+            const content = existsSync(`./${id}`) ? readFileSync(`./${id}`, "utf-8") : contents[id];
             return content;
         },
         resolveId: (source, importer, options) => {
-            if(options.isEntry) return "index.html";
+            if(options.isEntry) return path.relative(path.resolve("./"), source);
         },
         configureServer: (server) => {
             server.middlewares.use((req, res, next) => {
-                if (req.url !== '/') return next();
-                const content = existsSync("./index.html") ? readFileSync("./index.html", "utf-8") : defaultContent;
+                const url = req.url?.slice(1)?.replace(".html", "");
+                const id = url ? `${url}.html` : "index.html";
+                if (!contents[id]) return next();
+                const content = existsSync(`./${id}`) ? readFileSync(`./${id}`, "utf-8") : dev(contents[id]);
                 res.setHeader('Content-Type', 'text/html')
                 res.statusCode = 200;
                 res.end(content)
@@ -26,10 +32,19 @@ export function battutaVirtualRoot(root?: string) {
         },
         config: () => ({
             optimizeDeps: {
-                entries: [ "index.html" ]
+                entries: Object.keys(htmlMapping),
             } 
         })
     } as Plugin;
+}
+
+type Key = string | symbol | number;
+function map<T extends Key, P, R extends Key, G>(obj: Record<T, P>, f: (key: T, value: P) => [R, G]): Record<R, G> {
+    return Object.fromEntries(Object.entries(obj).map(([k, v]) => f(k as T, v as P))) as any;
+}
+
+function dev(html: string) {
+    return html.replace("<head>", `<head><script type="module" src="/@vite/client"></script>`)
 }
 
 const defaultHTML = (root: string) => `

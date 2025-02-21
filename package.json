@@ -1,7 +1,7 @@
 {
     "name": "battuta",
     "private": false,
-    "version": "0.0.14",
+    "version": "0.0.16",
     "type": "module",
     "license": "MIT",
     "bin": {
@@ -17,15 +17,22 @@
         "./compiler": "./dist/compiler.js",
         "./optimizer": "./dist/optimizer.js",
         "./runtime": "./dist/runtime.js",
-        "./three": "./dist/three.js",
         "./dom": "./dist/dom.js",
         "./signals": "./dist/signals.js",
         "./contexts": "./dist/contexts.js",
-        "./hooks": "./dist/hooks.js",
-        "./tweak": "./dist/tweak.js",
-        "./signals/screen": "./dist/signals/screen.js",
         "./jsx-runtime": "./dist/jsx-runtime.js",
-        "./jsx-dev-runtime": "./dist/jsx-dev-runtime.js"
+        "./jsx-dev-runtime": "./dist/jsx-dev-runtime.js",
+        "./utils/animate": "./dist/utils.animate.js",
+        "./utils/dev": "./dist/utils.dev.js",
+        "./utils/lazy": "./dist/utils.lazy.js",
+        "./utils/screen": "./dist/utils.screen.js",
+        "./utils/signals": "./dist/utils.signals.js",
+        "./utils/structure": "./dist/utils.structure.js",
+        "./utils/three": "./dist/utils.three.js",
+        "./utils/tree": "./dist/utils.tree.js",
+        "./utils/tweak": "./dist/utils.tweak.js",
+        "./macros/css.macro": "./dist/macros.css.macro.js",
+        "./macros/glsl.macro": "./dist/macros.glsl.macro.js"
     },
     "typesVersions": {
         "*": {
@@ -44,9 +51,6 @@
             "runtime": [
                 "dist/runtime.d.ts"
             ],
-            "three": [
-                "dist/three.d.ts"
-            ],
             "dom": [
                 "dist/dom.d.ts"
             ],
@@ -56,34 +60,60 @@
             "contexts": [
                 "dist/contexts.d.ts"
             ],
-            "hooks": [
-                "dist/hooks.d.ts"
-            ],
-            "tweak": [
-                "dist/tweak.d.ts"
-            ],
-            "signals/screen": [
-                "dist/signals/screen.d.ts"
-            ],
             "jsx-runtime": [
                 "dist/jsx-runtime.d.ts"
             ],
             "jsx-dev-runtime": [
                 "dist/jsx-dev-runtime.d.ts"
+            ],
+            "utils/animate": [
+                "dist/utils.animate.d.ts"
+            ],
+            "utils/dev": [
+                "dist/utils.dev.d.ts"
+            ],
+            "utils/lazy": [
+                "dist/utils.lazy.d.ts"
+            ],
+            "utils/screen": [
+                "dist/utils.screen.d.ts"
+            ],
+            "utils/signals": [
+                "dist/utils.signals.d.ts"
+            ],
+            "utils/structure": [
+                "dist/utils.structure.d.ts"
+            ],
+            "utils/three": [
+                "dist/utils.three.d.ts"
+            ],
+            "utils/tree": [
+                "dist/utils.tree.d.ts"
+            ],
+            "utils/tweak": [
+                "dist/utils.tweak.d.ts"
+            ],
+            "macros/css.macro": [
+                "dist/macros.css.macro.d.ts"
+            ],
+            "macros/glsl.macro": [
+                "dist/macros.glsl.macro.d.ts"
             ]
         }
     },
     "scripts": {
-        "build": "tsc && vite build"
+        "build": "tsc && vite build",
+        "build:quick": "vite build --mode quick",
+        "build:quick-types": "vite build --mode quick-types",
+        "build:nocheck": "vite build"
     },
     "devDependencies": {
-        "@tweakpane/core": "^2.0.4",
         "@types/babel__generator": "^7.6.8",
         "@types/babel__traverse": "^7.20.6",
         "@types/node": "^22.4.0",
         "@types/three": "^0.169.0",
         "battuta": "0.0.2",
-        "typescript": "^5.5.3",
+        "typescript": "github:BobochD-Brew/TypeScript-dist.git#c09037a02ad6c64f2596fdeb06a1e9759e2fd0b8",
         "vite-plugin-dts": "^4.0.3",
         "vite-plugin-externalize-deps": "^0.8.0"
     },
@@ -93,11 +123,21 @@
         "@babel/traverse": "^7.25.3",
         "@babel/types": "^7.25.2",
         "commander": "^12.1.0",
+        "ts-morph": "^25.0.1",
         "postcss": "^8.4.41",
-        "terser": "^5.31.6",
-        "three": "^0.169.0",
+        "unplugin-macros": "github:BobochD-Brew/unplugin-macros.git#0d7dc8bfc26bcc86a0bf8e40929994eaa6ca339e",
+        "vite": "^5.4.1",
         "tweakpane": "^4.0.4",
-        "unplugin-macros": "github:BobochD-Brew/unplugin-macros.git#6b6e4a810e781baf2b5778ad7276b8948713c6a3",
-        "vite": "^5.4.1"
+        "terser": "^5.31.6",
+        "@tweakpane/core": "^2.0.4"
+    },
+    "optionalDependencies": {},
+    "peerDependencies": {
+        "three": "*"
+    },
+    "peerDependenciesMeta": {
+        "three": {
+            "optional": true
+        }
     }
 }

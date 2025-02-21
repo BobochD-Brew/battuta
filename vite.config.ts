@@ -4,41 +4,50 @@ import dts from 'vite-plugin-dts'
 import { externalizeDeps } from 'vite-plugin-externalize-deps'
 import packageJson from "./package.json"
 import tsConfig from "./tsconfig.json"
-import { writeFileSync } from 'fs'
+import { readdirSync, writeFileSync } from 'fs'
 import { battutaJSX } from "./node_modules/battuta/dist/vite"
 
 const dist = "dist";
 
 const entries = {
-    // battuta: './lib/main.ts',
-    macros: './lib/macros/index.ts',
-    vite: './lib/vite/index.ts',
-    compiler: './lib/compiler/index.ts',
-    optimizer: './lib/optimizer/index.ts',
-    runtime: './lib/runtime/index.ts',
-    three: './lib/kits/three.tsx',
-    dom: './lib/kits/dom.tsx',
-    signals: './lib/signals/index.ts',
-    contexts: './lib/contexts/index.ts',
-    hooks: './lib/hooks/index.ts',
-    tweak: './lib/tweak/index.ts',
-    ["signals/screen"]: './lib/signals/screen.ts',
-    ["jsx-runtime"]: './lib/runtime/jsx-types.ts',
-    ["jsx-dev-runtime"]: './lib/runtime/jsx-types.ts',
+    "macros": './lib/macros/index.ts',
+    "vite": './lib/vite/index.ts',
+    "compiler": './lib/compiler/index.ts',
+    "optimizer": './lib/optimizer/index.ts',
+    "runtime": './lib/runtime/index.ts',
+    "dom": './lib/runtime/dom.tsx',
+    "signals": './lib/signals/index.ts',
+    "contexts": './lib/contexts/index.ts',
+    "jsx-runtime": './lib/runtime/jsx-types.ts',
+    "jsx-dev-runtime": './lib/runtime/jsx-types.ts',
 }
 
-const isMain = (name: string) => name === "battuta";
 const ignore = (name: string) => ["jsx-dev-runtime", "jsx-runtime"].includes(name) || name.includes("/");
+const outName = (name: string) => name.split("/").join(".");
+
+readdirSync("./lib/utils").forEach(file => {
+    if (!/\.tsx?$/.test(file)) return;
+    if (file.startsWith("_")) return;
+    const name = file.split(".")[0];
+    entries[`utils/${name}`] = `./lib/utils/${file}`;
+})
+
+readdirSync("./lib/macros").forEach(file => {
+    if (!/\.macro\.ts$/.test(file)) return;
+    if (file.startsWith("_")) return;
+    const name = file.split(".")[0];
+    entries[`macros/${name}.macro`] = `./lib/macros/${file}`;
+})
 
 packageJson.exports = Object.entries(entries).reduce((acc, [k, v]) => {
-    const path = isMain(k) ? "." : `./${k}`;
-    acc[path] = `./${dist}/${k}.js`;
+    const path = `./${k}`;
+    acc[path] = `./${dist}/${outName(k)}.js`;
     return acc;
 }, {}) as any;
 
 packageJson.typesVersions = {
     "*": Object.entries(entries).reduce((acc, [k, v]) => {
-        acc[isMain(k) ? "." : k] = [`${dist}/${k}.d.ts`];
+        acc[k] = [`${dist}/${outName(k)}.d.ts`];
         return acc;
     }, {})
 } as any;
@@ -56,12 +65,13 @@ tsConfig.compilerOptions.paths = aliases;
 
 writeFileSync('./tsconfig.json', JSON.stringify(tsConfig, null, 4));
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
     plugins: [
-        dts({
+        mode == "quick" ? null : dts({
             rollupTypes: true,
             tsconfigPath: "./tsconfig.json",
-            insertTypesEntry: true,
+            // insertTypesEntry: true,
+            entryRoot: "lib",
             beforeWriteFile(filePath, content) {
                 if(filePath.includes("jsx-runtime") || filePath.includes("jsx-dev-runtime")) return {
                     content: `import { TreeNode } from "./runtime";\n${content}`,
@@ -78,15 +88,18 @@ export default defineConfig({
         externalizeDeps(),
         battutaJSX(),
     ],
+    define: {
+        'process.env.HOST_DEV': 'import.meta.env.DEV'
+    },
     resolve: {
         alias: Object.entries(aliases).reduce((acc, [k,v]: any) => (acc[k] = resolve(__dirname, v[0]), acc),{}),
     },
     build: {
         lib: {
-            entry: Object.entries({
-                ...entries,
-                "cli": "./cli/index.ts"
-            }).reduce((acc, [k,v]) => (acc[k] = resolve(__dirname, v), acc),{}),
+            entry: Object
+                .entries({ ...entries, "cli": "./cli/index.ts" })
+                .reverse()
+                .reduce((acc, [k,v]) => (acc[outName(k)] = resolve(__dirname, v), acc),{}),
             formats: ['es']
         },
         rollupOptions: {
@@ -95,4 +108,4 @@ export default defineConfig({
             },
         }
     }
-})
+}))

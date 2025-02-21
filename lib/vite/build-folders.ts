@@ -2,7 +2,12 @@ import { existsSync, lstatSync, mkdirSync, readdirSync, renameSync, rmdirSync } 
 import path, { join, resolve } from "path";
 import { Plugin } from "vite";
 
-export function battutaFolders(config?: any) {
+export type FoldersConfig = {
+    temp: string,
+    move: string,
+}
+
+export function battutaFolders(config?: FoldersConfig) {
     return {
         name: "battuta-build-folders",
         generateBundle(options, _bundle) {

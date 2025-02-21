@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
 import { FileAction } from './utils';
-import { compile, transformJSX } from '@compiler';
+import { compile, inferModes, transformJSX } from '@compiler';
 import { optimize, optimizeStrings } from '@optimizer';
 import { build, createServer } from 'vite'
 import battutaPlugin from '@vite';
@@ -64,7 +64,11 @@ program
 
 program
     .command(FileAction.pattern('compile'))
-    .action(FileAction.wrap(code => compile(code).code));
+    .action(FileAction.wrap((code, path) => compile(code, path)));
+
+program
+    .command(FileAction.pattern('compile:modes'))
+    .action(FileAction.wrap((code, path) => inferModes(code, path)));
 
 program
     .command(FileAction.pattern('compile:jsx'))

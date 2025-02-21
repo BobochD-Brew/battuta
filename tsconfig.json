@@ -5,6 +5,7 @@
         "module": "ESNext",
         "lib": [
             "ES2020",
+            "ES2023.Array",
             "DOM",
             "DOM.Iterable"
         ],
@@ -43,23 +44,14 @@
             "@runtime": [
                 "./lib/runtime/index.ts"
             ],
-            "@three": [
-                "./lib/kits/three.tsx"
-            ],
             "@dom": [
-                "./lib/kits/dom.tsx"
+                "./lib/runtime/dom.tsx"
             ],
             "@signals": [
                 "./lib/signals/index.ts"
             ],
             "@contexts": [
                 "./lib/contexts/index.ts"
-            ],
-            "@hooks": [
-                "./lib/hooks/index.ts"
-            ],
-            "@tweak": [
-                "./lib/tweak/index.ts"
             ]
         }
     },
