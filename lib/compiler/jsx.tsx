@@ -24,6 +24,7 @@ export function transformJSX(jsCode: string, dom = "battuta/dom") {
     addImport(ast, "set", "battuta/runtime");
     addImport(ast, "call", "battuta/runtime");
     addImport(ast, "append", "battuta/runtime");
+    addImport(ast, "seal", "battuta/runtime");
 
     return generate(ast, {}, jsCode);
 }
@@ -55,16 +56,18 @@ function handleJSXElement(node: t.JSXElement | t.JSXFragment): t.Expression | nu
     const props = openingElement.attributes.map(a=>handleAttribute(a, mode)!).filter(Boolean);
 	
 	if(isTag) {
-		return withChildren(
-			children,
-			withAtrributes(
-				props,
-				t.callExpression(
-					t.identifier(isSVGTag ? btt('createSVGElement') : btt('createElement')),
-					[t.stringLiteral(tagName)]
+		return withSeal(
+			withChildren(
+				children,
+				withAtrributes(
+					props,
+					t.callExpression(
+						t.identifier(isSVGTag ? btt('createSVGElement') : btt('createElement')),
+						[t.stringLiteral(tagName)]
+					)
 				)
 			)
-		);
+		) 
 	}
 
 	if(mode === "$c") {
@@ -84,20 +87,22 @@ function handleJSXElement(node: t.JSXElement | t.JSXFragment): t.Expression | nu
 		const constructor = bestCandidate.slice(0, lastNonNull + 1);
 		const keys = constructorSignatures[constructorCandidates.indexOf(bestCandidate)];
 
-		return withChildren(
-			children,
-			withAtrributes(
-				props.filter(prop => prop.key.length > 1 || !keys.includes(prop.key[0].value)),
-				t.callExpression(
-					t.memberExpression(
-						t.identifier(tagName),
-						t.identifier(btt('create')),
-						true
-					),
-					constructor.map(el => el || t.identifier("undefined"))
+		return withSeal(
+			withChildren(
+				children,
+				withAtrributes(
+					props.filter(prop => prop.key.length > 1 || !keys.includes(prop.key[0].value)),
+					t.callExpression(
+						t.memberExpression(
+							t.identifier(tagName),
+							t.identifier(btt('create')),
+							true
+						),
+						constructor.map(el => el || t.identifier("undefined"))
+					)
 				)
 			)
-		)
+		);
 	}
 
 	if(mode === "$f") {
@@ -113,15 +118,19 @@ function handleJSXElement(node: t.JSXElement | t.JSXFragment): t.Expression | nu
 
 		const callCandidates = callSignatures.map(sig => sig.map(param => objectProps[param]))
 		const bestCandidate = callCandidates.sort((a, b) => b.filter(Boolean).length - a.filter(Boolean).length)[0];
-		const lastNonNull = bestCandidate.findLastIndex(Boolean);
-		const call = bestCandidate.slice(0, lastNonNull + 1);
 		const keys = callSignatures[callCandidates.indexOf(bestCandidate)];
-		
-		return withAtrributes(
-			props.filter(prop => prop.key.length > 1 || !keys.includes(prop.key[0].value)),
-			t.callExpression(
-				t.identifier(tagName),
-				call.map(el => el || t.identifier("undefined"))
+		const args = [];
+		while(children.length || bestCandidate.length) args.push(bestCandidate.shift() || children.shift());
+		const lastNonNull = args.findLastIndex(Boolean);
+		const call = args.slice(0, lastNonNull + 1).map(el => el || t.identifier("undefined"));
+
+		return withSeal(
+			withAtrributes(
+				props.filter(prop => prop.key.length > 1 || !keys.includes(prop.key[0].value)),
+				t.callExpression(
+					t.identifier(tagName),
+					call
+				)
 			)
 		)
 	}
@@ -143,11 +152,7 @@ function handleJSXElement(node: t.JSXElement | t.JSXFragment): t.Expression | nu
 function withAtrributes(props: { key: t.StringLiteral[]; value: t.Expression }[], node: t.Expression) {
 	return props.reduce((acc, { key, value }) => {
 		switch(true) {
-			case key[0].type == "StringLiteral" && ["$", "$c", "$d", "$f", "$n"].includes(key[0].value): return acc;
-			case ["StringLiteral", "BooleanLiteral"].includes(value.type): return t.callExpression(
-				t.memberExpression(acc, t.identifier(btt("set")), true),
-				[value, ...key]
-			);
+			case ["$", "$c", "$d", "$f", "$n"].includes(key[0].value): return acc;
 			case (
 				value.type == "CallExpression" &&
 				value.callee.type == "Identifier" &&
@@ -158,6 +163,17 @@ function withAtrributes(props: { key: t.StringLiteral[]; value: t.Expression }[]
 					[t.identifier("_")],
 					t.arrayExpression(value.arguments as (t.Expression | t.SpreadElement)[])
 				), ...key]
+			);
+			case key[key.length - 1].value.endsWith("$"): return t.callExpression(
+				t.memberExpression(acc, t.identifier(btt("call")), true),
+				[t.arrowFunctionExpression(
+					[t.identifier("_")],
+					(value.type == "TupleExpression" || value.type == "ArrayExpression") ? t.arrayExpression(value.elements) : value
+				), ...key.map((k, i) => i == key.length - 1 ? t.stringLiteral(k.value.slice(0, -1)) : k)]
+			);
+			case ["StringLiteral", "BooleanLiteral"].includes(value.type): return t.callExpression(
+				t.memberExpression(acc, t.identifier(btt("set")), true),
+				[value, ...key]
 			);
 			default:  return t.callExpression(
 				t.memberExpression(acc, t.identifier(btt("assign")), true),
@@ -176,6 +192,17 @@ function withChildren(children: t.Expression[], node: t.Expression) {
 			true
 		),
 		children
+	)
+}
+
+function withSeal(node: t.Expression) {
+	return t.callExpression(
+		t.memberExpression(
+			node,
+			t.identifier(btt("seal")),
+			true
+		),
+		[]
 	)
 }
 

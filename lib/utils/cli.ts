@@ -1,15 +1,29 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
-import { FileAction } from './utils';
 import { compile, inferModes, transformJSX } from '@compiler';
-import { optimize, optimizeStrings } from '@optimizer';
+import { optimize, optimizeFunctions, optimizeStrings } from '@optimizer';
 import { build, createServer } from 'vite'
-import battutaPlugin from '@vite';
 import { execSync } from 'child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
-import optimizeFunctions from '../lib/optimizer/functions';
+import path from "path";
+import battutaPlugins from './vite';
 
 const program = new Command();
+const FileAction = {
+    pattern: (name: string) => `${name} <file>`,
+    wrap: (f: (arg: string, path: string) => string) => (file: string) => {
+        try {
+            const p = path.resolve(file);
+            const content = readFileSync(file, "utf-8");
+            const compiledContent = f(content, p);
+            const parsedPath = path.parse(file);
+            const compiledFile = path.join(parsedPath.dir, `${parsedPath.name}.result${parsedPath.ext}`);
+            writeFileSync(compiledFile, compiledContent);
+        } catch (error) {
+            console.error("An error occurred during the process:", error);
+        }
+    },
+}
 
 /**
  *          INIT 
@@ -41,7 +55,7 @@ program
 program
     .command('dev')
     .action(async () => {
-        const server = await createServer({ plugins: [ battutaPlugin() ] })
+        const server = await createServer({ plugins: [ battutaPlugins() ] })
         await server.listen();
         server.printUrls()
         server.bindCLIShortcuts({ print: true })
@@ -55,7 +69,7 @@ program
     .command('bundle')
     .option('-m, --minify <boolean>', 'Minify the chunks', true)
     .action(async (options) => {
-        await build({ plugins: [ battutaPlugin() ], build: { minify: options.minify } })
+        await build({ plugins: [ battutaPlugins() ], build: { minify: options.minify } })
     });
 
 /**

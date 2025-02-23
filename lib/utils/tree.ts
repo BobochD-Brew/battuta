@@ -1,4 +1,4 @@
-import { cleanup, insert, on, parent } from "@runtime";
+import { append, cleanup, insert, on, parent } from "@runtime";
 import { currentContext } from "../contexts";
 import { devError } from "./dev";
 
@@ -19,3 +19,5 @@ export function useRemove(): () => void {
     devError(!_parent, "useRemove was called from a context with no parent")
     return () => _parent[cleanup]();
 }
+
+export const render = (node: Object, root: Object) => root[append](node);

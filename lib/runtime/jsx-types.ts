@@ -1,94 +1,39 @@
-export declare function jsx(element: string | ((...args: any[]) => any), props: any, children: any): any;
+export declare function jsx(element: any, props: any, children: any): any;
 export declare const jsxDEV: typeof jsx;
 export declare function jsxFragment(): void;
 
-type DeepPairs<T> = {
-    [K in keyof T]: T[K] extends Object
-        ? `${K & string}:${Extract<keyof T[K], string>}`
-        : never
-}[keyof T];
-
-
-type HTMLElements = {
-    [k in keyof HTMLElementTagNameMap]: Partial<Omit<HTMLElementTagNameMap[k], "children">> & {
-        children?: any | any[];
-    } & {
-        // @ts-ignore
-        [K in DeepPairs<HTMLElementTagNameMap[k]>]?: K extends `${infer Q}:${infer P}` ? HTMLElementTagNameMap[k][Q][P] : never;
-    }
-}
-
-type WithSvg = HTMLElements & {
-    [k in keyof SVGElementTagNameMap]: Partial<Omit<SVGElementTagNameMap[k], "children">> & {
-        children?: any | any[];
-    } & {
-        [K in DeepPairs<SVGElementTagNameMap[k]>]?: K extends `${infer Q}:${infer P}` ? (
-            // @ts-ignore
-            SVGElementTagNameMap[k][Q][P] extends SVGAnimatedEnumeration ? string : SVGElementTagNameMap[k][Q][P]
-        ) : never;
-    }
-}
-
-type WithFunction<T> = {
-    [K in keyof T]: T[K] extends ((...args: any) => any) ? (Parameters<T[K]> | T[K]) : T[K];
-}
-
-type ParamsToObj<T> = {
-    // this is only available in this typescript version https://github.com/BobochD-Brew/TypeScript
-    // https://github.com/microsoft/TypeScript/issues/44939
-    // @ts-ignore 
-    -readonly [K in keyof T["$byName"]]?: T["$byName"][K];
-}
-
 export namespace JSX {
-    // @ts-ignore
-    export interface IntrinsicElements extends WithSvg {
-        switch: {
-            on: any;
-            children: IntrinsicElements["case"][];
-        };
-        case: {
-            so?: any;
-            children?: any;
-        } & ({
-            is: any;
-        } | {
-            default: true;
-        });
-        array: {
-            children?: any;
-        };
-    }
-    export interface ElementAttributesProperty {
-    }
-    export interface IntrinsicAttributes extends Record<string, any> {
-    }
-    export interface ElementChildrenAttribute {
-        children: {};
-    }
-    export type LibraryManagedAttributes<C, P> = {}
-        // modes overrides
-        & { $c?: boolean, $d?: boolean, $f?: boolean }
-        // instance members
-        & (C extends new (...args: any) => infer U ? Partial<Omit<WithFunction<U>, "children">> : {})
-        // instance deep members
-        & (C extends new (...args: any) => infer U ? {
-            [K in DeepPairs<U>]?: K extends `${infer Q}:${infer T}` ? (
-                // @ts-ignore
-                U[Q][T] extends ((...args: any) => any) ? (Parameters<U[Q][T]> | U[Q][T]) : U[Q][T]
-            ) : never;
-        } : {}) 
-        // constructor args
-        & (C extends new (...args: any) => any ? ParamsToObj<ConstructorParameters<C>> : {})
-        // result members
-        & (C extends (...args: any) => infer U ? Partial<Omit<WithFunction<U>, "children">> : {})
-        // result deep members
-        & (C extends (...args: any) => infer U ? {
-            [K in DeepPairs<U>]?: K extends `${infer Q}:${infer T}` ? (
-                // @ts-ignore
-                U[Q][T] extends ((...args: any) => any) ? (Parameters<U[Q][T]> | U[Q][T]) : U[Q][T]
-            ) : never;
-        } : {})
-        // function args
-        & (C extends (...args: any) => any ? ParamsToObj<Parameters<C>> : {})
+    export type ElementType = any;
+    export type LibraryManagedAttributes<C, P> = Attributes<C, P>;
+    export interface IntrinsicElements extends Elements {}
+    export interface ElementAttributesProperty {}
+    export interface IntrinsicAttributes {}
+    export interface ElementChildrenAttribute { children: {} }
+    // this is not available yet in standard typescript jsx https://github.com/microsoft/TypeScript/issues/14729
+    export type ElementOf<T> = Result<T>;
 }
+
+type Elements = ElementsOf<ElementsMap>;
+type Attributes<C, P> = (InstanceProps<C> & ClassProps<C>) | (ResultProps<C> & FunctionProps<C>) | P;
+type InstanceProps<T> = T extends new (...args: any) => infer U ? Partial<Callable<Flatten<Babysitter<U>>>> : never;
+type ClassProps<T> = T extends new (...args: any) => any ? ByName<ConstructorParameters<T>> : never;
+type ResultProps<T> = T extends (...args: any) => infer U ? Partial<Callable<Flatten<Babysitter<U>>>> : never;
+type FunctionProps<T> = T extends (...args: any) => any ? ByName<Parameters<T>> | { children: Parameters<T> } | (ByName<Parameters<T>> & { children: Parameters<T> }) : never;
+type ElementsOf<T> = { [K in keyof T]: Partial<Callable<Flatten<Babysitter<T[K]>>>> }
+type ElementsMap = HTMLElementTagNameMap & SVGElementTagNameMap;
+type Babysitter<T> = Omit<T, "children"> & { children?: Object | Object[] | string | undefined | { toString: () => string } }
+type Functions<T> = { [K in keyof T as T[K] extends ((...args: any) => any) ? K : never]: T[K] }
+type Moddable = { $c?: (string | undefined)[][], $d?: boolean, $f?: (string | undefined)[][] }
+type DeepKeys<T> = { [K in keyof T]: `${K & string}:${Extract<keyof T[K], string>}` }[keyof T] | keyof T;
+// @ts-ignore
+type Callable<T> = { [K in keyof Functions<T> as `${K}$`]: Parameters<Functions<T>[K]> } & T;
+// @ts-ignore
+type Flatten<T> =  { [K in DeepKeys<T>]: K extends `${infer F}:${infer S}` ? T[F][S] : T[K] }
+// this is only available in this typescript version https://github.com/BobochD-Brew/TypeScript
+// https://github.com/microsoft/TypeScript/issues/44939 
+// @ts-ignore
+type ByName<T> = { -readonly [K in keyof T["$byName"]]?: T["$byName"][K] }
+type Result<T> =T extends new (...args: any) => infer U ? U
+    : T extends (...args: any) => infer U ? U
+// @ts-ignore
+    : ElementsMap[T]

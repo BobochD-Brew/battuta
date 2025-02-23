@@ -1,10 +1,11 @@
 import { append, childrenIndex, cleanup, empty, insert, remove } from "@runtime";
-import { createSignal, useEffect } from "@signals";
+import { createSignal, untrack, useEffect } from "@signals";
 import { aspectRatio, height, width } from "./screen";
 import { Clock, Controls, Group, Object3D, PCFSoftShadowMap, PerspectiveCamera, Renderer, Scene, Vector2, WebGLRenderer } from "three";
 import { EffectComposer, OrbitControls, RenderPass } from "three/examples/jsm/Addons.js";
 import { createContext } from "../contexts";
 import { onCleanup } from "./tree";
+import { uniform as uniformTHREE } from "three/webgpu";
 
 Object3D.prototype[insert] = function(child: any){
     this.add(child);
@@ -123,4 +124,16 @@ export function Canvas({
         {(scene[append](children), undefined)}
         {renderer.domElement}
     </CanvasContext>
+}
+
+export function uniform<T>(get: () => T) {
+    const u = { value: undefined as T }
+    useEffect(() => u.value = get());
+    return u;
+}
+
+export function uniformTSL<T>(value: () => T) {
+    const u = uniformTHREE(untrack(value));
+    useEffect(() => u.value = value());
+    return u;
 }

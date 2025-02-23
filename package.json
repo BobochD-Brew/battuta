@@ -1,7 +1,7 @@
 {
     "name": "battuta",
     "private": false,
-    "version": "0.0.16",
+    "version": "0.0.17",
     "type": "module",
     "license": "MIT",
     "bin": {
@@ -12,19 +12,23 @@
         "README.md"
     ],
     "exports": {
-        "./macros": "./dist/macros.js",
-        "./vite": "./dist/vite.js",
         "./compiler": "./dist/compiler.js",
         "./optimizer": "./dist/optimizer.js",
         "./runtime": "./dist/runtime.js",
-        "./dom": "./dist/dom.js",
         "./signals": "./dist/signals.js",
         "./contexts": "./dist/contexts.js",
         "./jsx-runtime": "./dist/jsx-runtime.js",
-        "./jsx-dev-runtime": "./dist/jsx-dev-runtime.js",
+        "./jsx-dev-runtime": "./dist/jsx-runtime.js",
+        "./macros": "./dist/macros.js",
+        "./vite": "./dist/vite.js",
+        "./dom": "./dist/dom.js",
+        "./cli": "./dist/cli.js",
         "./utils/animate": "./dist/utils.animate.js",
         "./utils/dev": "./dist/utils.dev.js",
+        "./utils/html": "./dist/utils.html.js",
         "./utils/lazy": "./dist/utils.lazy.js",
+        "./utils/mouse": "./dist/utils.mouse.js",
+        "./utils/poly": "./dist/utils.poly.js",
         "./utils/screen": "./dist/utils.screen.js",
         "./utils/signals": "./dist/utils.signals.js",
         "./utils/structure": "./dist/utils.structure.js",
@@ -36,12 +40,6 @@
     },
     "typesVersions": {
         "*": {
-            "macros": [
-                "dist/macros.d.ts"
-            ],
-            "vite": [
-                "dist/vite.d.ts"
-            ],
             "compiler": [
                 "dist/compiler.d.ts"
             ],
@@ -50,9 +48,6 @@
             ],
             "runtime": [
                 "dist/runtime.d.ts"
-            ],
-            "dom": [
-                "dist/dom.d.ts"
             ],
             "signals": [
                 "dist/signals.d.ts"
@@ -64,7 +59,19 @@
                 "dist/jsx-runtime.d.ts"
             ],
             "jsx-dev-runtime": [
-                "dist/jsx-dev-runtime.d.ts"
+                "dist/jsx-runtime.d.ts"
+            ],
+            "macros": [
+                "dist/macros.d.ts"
+            ],
+            "vite": [
+                "dist/vite.d.ts"
+            ],
+            "dom": [
+                "dist/dom.d.ts"
+            ],
+            "cli": [
+                "dist/cli.d.ts"
             ],
             "utils/animate": [
                 "dist/utils.animate.d.ts"
@@ -72,8 +79,17 @@
             "utils/dev": [
                 "dist/utils.dev.d.ts"
             ],
+            "utils/html": [
+                "dist/utils.html.d.ts"
+            ],
             "utils/lazy": [
                 "dist/utils.lazy.d.ts"
+            ],
+            "utils/mouse": [
+                "dist/utils.mouse.d.ts"
+            ],
+            "utils/poly": [
+                "dist/utils.poly.d.ts"
             ],
             "utils/screen": [
                 "dist/utils.screen.d.ts"
@@ -113,7 +129,7 @@
         "@types/node": "^22.4.0",
         "@types/three": "^0.169.0",
         "battuta": "0.0.2",
-        "typescript": "github:BobochD-Brew/TypeScript-dist.git#c09037a02ad6c64f2596fdeb06a1e9759e2fd0b8",
+        "typescript": "github:BobochD-Brew/TypeScript-dist.git#139ece2da4c5329b00555e37f5d508ca22401473",
         "vite-plugin-dts": "^4.0.3",
         "vite-plugin-externalize-deps": "^0.8.0"
     },

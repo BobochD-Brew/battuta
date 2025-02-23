@@ -17,16 +17,15 @@ export function MapVector<T, P>(props: { vector: VectorResult<T, P>, render: (va
     ]
 }
 
-export function Tree<R, K>(props: { root: R, vector: (node: R) => VectorResult<K, R>, render: (value: () => R, key: K, rest: any, path: K[], parent: R) => any }) {
+export function Tree<R, K>(props: { root: R, path: K[], vector: (node: R) => VectorResult<K, R>, render: (value: () => R, key: K, rest: any, path: K[], parent: R) => any }) {
     const root = props.root;
     const getChilds = props.vector;
     const vector = getChilds(root);
     if(!vector) return null;
     const render = props.render;
-    const depth = ((props as any).depth || 0 ) + 1;
-    const path = (props as any).path || [];
+    const path = props.path || [];
     return <MapVector
         vector={vector}
-        render={(v: () => R, k: K) => render(v, k, () => <Tree path={path.concat([k])} depth={depth} root={v()} render={render} vector={getChilds}/>, path.concat([k]), root)}
+        render={(v: () => R, k: K) => render(v, k, () => <Tree path={path.concat([k])} root={v()} render={render} vector={getChilds}/>, path.concat([k]), root)}
     />
 }

@@ -108,7 +108,7 @@ F(undefined, value_2())
     [assign](() => value_3(), "prop")
 ```
 
-for this to work some methods need to be implemented on the parent prototypes, by default Object instances define default implementations that can be overwriten, at least `insert` and `remove` need to be implemented
+for this to work some methods need to be implemented on the parent prototypes, by default Object instances define default implementations that can be overwritten, at least `insert` and `remove` need to be implemented
 
 this is an example in the case of threejs
 
@@ -138,19 +138,19 @@ Object3D.prototype[empty] = function(){
     return new Group();
 }
 
-// implemented by default, can be overwriten
+// implemented by default, can be overwritten
 Object3D.prototype[create] = function (...props) {
     return Reflect.construct(this as any, props);
 }
 
-// implemented by default, can be overwriten
+// implemented by default, can be overwritten
 Object3D.prototype[set] = function (value, ...keys) {
     const key = keys.pop()!;
     resolveObj(this, keys)[key] = value;
     return this;
 }
 
-// implemented by default, can be overwriten
+// implemented by default, can be overwritten
 Object3D.prototype[assign] = function (value, ...keys) {
     const key = keys.pop()!;
     const target = resolveObj(this, keys);
@@ -158,7 +158,7 @@ Object3D.prototype[assign] = function (value, ...keys) {
     return this;
 }
 
-// implemented by default, can be overwriten
+// implemented by default, can be overwritten
 Object3D.prototype[call] = function (value, ...keys) {
     const key = keys.pop()!;
     const target = resolveObj(this, keys);
@@ -166,6 +166,11 @@ Object3D.prototype[call] = function (value, ...keys) {
     useEffect(() => f(...value()));
     return this;
 }
+
+// could be overwritten for advance usages, see lib/runtime/index.ts
+Object3D.prototype[append] // compose the tree
+Object3D.prototype[cleanup] // handles element removals
+Object3D.prototype[seal] // called once all props & childs have been collected
 ```
 
 ## Contexts

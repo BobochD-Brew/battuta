@@ -29,12 +29,6 @@
         "jsxFactory": "jsx",
         "jsxFragmentFactory": "jsxF",
         "paths": {
-            "@macros": [
-                "./lib/macros/index.ts"
-            ],
-            "@vite": [
-                "./lib/vite/index.ts"
-            ],
             "@compiler": [
                 "./lib/compiler/index.ts"
             ],
@@ -44,20 +38,25 @@
             "@runtime": [
                 "./lib/runtime/index.ts"
             ],
-            "@dom": [
-                "./lib/runtime/dom.tsx"
-            ],
             "@signals": [
                 "./lib/signals/index.ts"
             ],
             "@contexts": [
                 "./lib/contexts/index.ts"
+            ],
+            "@macros": [
+                "./lib/macros/index.ts"
+            ],
+            "@vite": [
+                "./lib/utils/vite.ts"
+            ],
+            "@dom": [
+                "./lib/utils/dom.tsx"
             ]
         }
     },
     "include": [
-        "lib",
-        "cli"
+        "lib"
     ],
     "exclude": [
         "dist"

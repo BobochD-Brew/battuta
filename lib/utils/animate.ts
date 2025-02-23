@@ -10,8 +10,13 @@ export const Ease = {
     inOutCubic: (t: number) => t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1
 };
 
-export function createTransition<T>(f: () => T, anim: (current: T, next: T, set: (v: T) => void) => any) {
-    const [value, setValue] = createSignal<T>(undefined as any);
+export function createTransition<T>(start: T, f: () => T, anim: (current: T, next: T, set: (v: T) => void) => any): () => T;
+export function createTransition<T>(f: () => T, anim: (current: T, next: T, set: (v: T) => void) => any): () => T;
+export function createTransition<T>(...args: [T, () => T, (c: T, n: T, s:(v: T) => void) => any] | [() => T, (c: T, n: T, s:(v: T) => void) => any]) {
+    const anim = args.pop() as (c: T, n: T, s:(v: T) => void) => any;
+    const f = args.pop() as () => T;
+    const start = args.pop() as T; 
+    const [value, setValue] = createSignal<T>(start);
     useEffect(() => {
         const newValue = f();
         anim(untrack(value), newValue, setValue);

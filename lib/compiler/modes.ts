@@ -8,12 +8,9 @@ export function inferModes(jsCode: string, id: string) {
     if(seen[id]) {
         const hash = seen[id].hash;
         const currentHash = crypto.createHash('md5').update(jsCode).digest('hex');
-        if(currentHash != hash) {
-            project.removeSourceFile(seen[id].file);
-            delete seen[id];
-        } else {
-            return seen[id].result;
-        }
+        if(currentHash == hash) return seen[id].result
+        project.removeSourceFile(seen[id].file);
+        delete seen[id];
     }
 
     const file = project.createSourceFile(id, jsCode, { overwrite: true });
