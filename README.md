@@ -1,6 +1,6 @@
 # Battuta
 
-a sketchy experimental frontend framework
+A experimental signals based /frontend/ framework allowing to use JSX with non-component objects\
 highly inspired from [solidjs](https://www.solidjs.com/) and [solid-three](https://github.com/solidjs-community/solid-three)  
 
 ## Setup a new project
@@ -12,12 +12,15 @@ then run it with `npm run dev`
 ## Table of Contents
 
 - [Setup](#setup-a-new-project)
+- [Example](#example)
 - [JSX](#jsx)
     - [DOM](#dom)
     - [Components](#components)
     - [Constructors](#constructors)
     - [Functions](#functions)
+    - [Customize](#customize)
 - [Contexts](#contexts)
+- [Typescript](#typescript)
 - [CLI](#cli)
 - [Vite](#use-with-vite)
     - [All In One](#all-in-one-plugin)
@@ -29,9 +32,112 @@ then run it with `npm run dev`
     - [Config](#config)
 - [JS API](#transformation-apis)
 
+## Example
+
+### Composing third party objects
+
+```tsx
+import { time } from "battuta/utils/time";
+import { computed } from "battuta/utils/signals";
+import { Canvas } from "battuta/utils/three";
+// import objects directly from third party libraries
+import { Mesh, BoxGeometry, MeshBasicMaterial, Group, BufferGeometry } from "three";
+
+function Rotated(geometry: BufferGeometry) {
+    return geometry.rotateX(-Math.PI / 2);
+}
+
+function App() {
+    const [ amplitude, setAmplitude ] = createSignal(10);
+    const wave = computed(() => Math.sin(time()) * amplitude());
+    const increase = () => setAmplitude(amplitude() + 1);
+
+    return <div>
+        <button onclick={increase}>Increase</button>
+        <Canvas> {/* transition component, dom <=> three */}
+            <Group> {/* compose third party objects */}
+                <Mesh position:y={wave() + 5}> {/* assign direct or deep properties to reactive values */}
+                    <BoxGeometry width={2}/> {/* set constructor arguments */}
+                    <MeshBasicMaterial />
+                </Mesh>
+                <Mesh position:setX$={[wave()]}> {/* call member methods when the derived signal change */}
+                    <Rotated> {/* Call non component functions using childs as arguments */}
+                        <BoxGeometry width={2}/>
+                    </Rotated>
+                    <MeshBasicMaterial />
+                </Mesh>
+                <Mesh position:setX$={[wave()]}>
+                    <Rotated geometry={<BoxGeometry width={2}/>}/> {/* Call non component functions using explicit arguments */}
+                    <MeshBasicMaterial />
+                </Mesh>
+            </Group>
+        </Canvas>
+    </div>
+}
+```
+
+> The composition implementations can be customized per prototype see [Customize](#customize)
+
+### Macros
+
+Macros are functions that run at build time and replace their own content (or more). Battuta includes a fork of [unplugin-macros](https://github.com/unplugin/unplugin-macros) exposing more macros options.
+
+```tsx
+import { css } from "battuta/macros/css.macro";
+const styles = css`
+    .myClass {
+        color: red;
+    }
+`
+```
+Transforms to 
+```tsx
+import "./.temp/styles/PQOn.css"
+const styles = { "myClass": ".cls-0o8g8wl1" }
+```
+
+You can write custom macros by naming them filename.macro.ts. Macros are exectued after JSX is transformed and as JSX compiles to direct functions, you can write JSX macros
+
+```tsx
+import { readFileSync } from "fs";
+
+export function Svg(args) {
+    const svgText = readFileSync(args.url, "utf-8")
+    const minified = minify(svgText);
+    return new String(`(() => {
+        let el = document.createElement("div");
+        el.innerHTML = \`${minified}\`;
+        return el.children[0]
+    )()`);
+}
+```
+
+```tsx
+import { Svg } from "./mymacro.macro"
+
+function App() {
+
+    return <Svg url="./icons/arrow.svg"/>
+}
+```
+
+Macros can also query & manipulate the file's AST
+
+```tsx
+import { MacroContext } from "battuta/macros";
+export function contextMacro(args) {
+    const ctx = this as MacroContext;
+    const node = ctx.node;
+    if(node.type !== "CallExpression") throw new Error("Invalid use of the macro")
+    const contextFunction = node.arguments[1];
+    const lastStatment = contextFunction.body.body[contextFunction.body.body.length - 1];
+    ctx.magicString.overwriteNode(lastStatment, `10`)
+}
+```
+
 ## JSX
 
-JSX expressions are compiled differently based on the type of tag used
+JSX expressions are compiled differently based on the type of the tag used
 
 ### DOM
 
@@ -107,6 +213,8 @@ F(value_1(), value_2())
 F(undefined, value_2())
     [assign](() => value_3(), "prop")
 ```
+
+### Customize
 
 for this to work some methods need to be implemented on the parent prototypes, by default Object instances define default implementations that can be overwritten, at least `insert` and `remove` need to be implemented
 
@@ -209,6 +317,35 @@ function Component() {
     <EventsProvider>
 }
 
+```
+
+## Typescript
+
+> The framework uses features that are not available in typescript currently, for the following to work you need to install this [package](https://github.com/BobochD-Brew/TypeScript-dist) (build of this [typescript fork](https://github.com/BobochD-Brew/TypeScript)) and set VSCode to use the workspace's typescript version
+
+
+```tsx
+const a = <div/> // typed as HTMLDivElement
+const b = <Array/> // typed as Array
+const d = <F/> // typed as ReturnType<typeof F>, does not work if F is a Generic
+
+const e = <>
+    <div/>
+    {10}
+    {"10" as const}
+</> // [HTMLDivElement, number, "10"]
+
+const F = (arg: number, other_arg: string) => 10;
+
+const f = <F
+    other_arg={"text"}
+    arg={"10"} // Type 'string' is not assignable to type 'number'
+/>
+
+const f = <F> {/* Type 'string' is not assignable to type 'number' */}
+    {"10"}
+    {"text"}
+</F>
 ```
 
 ## CLI

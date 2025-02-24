@@ -18,8 +18,8 @@ export default function battutaPlugins(config?: {
         battutaConfig(),
         battutaVirtualRoot(config?.root),
         battutaInferModes(config?.modes),
-        battutaMacros(config?.macros),
         battutaJSX(config?.jsx),
+        battutaMacros(config?.macros),
         battutaFolders(config?.folders),
         battutaOptimizer(config?.optimizer)
     ];

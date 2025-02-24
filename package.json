@@ -1,7 +1,7 @@
 {
     "name": "battuta",
     "private": false,
-    "version": "0.0.17",
+    "version": "0.0.23",
     "type": "module",
     "license": "MIT",
     "bin": {
@@ -28,11 +28,11 @@
         "./utils/html": "./dist/utils.html.js",
         "./utils/lazy": "./dist/utils.lazy.js",
         "./utils/mouse": "./dist/utils.mouse.js",
-        "./utils/poly": "./dist/utils.poly.js",
         "./utils/screen": "./dist/utils.screen.js",
         "./utils/signals": "./dist/utils.signals.js",
         "./utils/structure": "./dist/utils.structure.js",
         "./utils/three": "./dist/utils.three.js",
+        "./utils/time": "./dist/utils.time.js",
         "./utils/tree": "./dist/utils.tree.js",
         "./utils/tweak": "./dist/utils.tweak.js",
         "./macros/css.macro": "./dist/macros.css.macro.js",
@@ -88,9 +88,6 @@
             "utils/mouse": [
                 "dist/utils.mouse.d.ts"
             ],
-            "utils/poly": [
-                "dist/utils.poly.d.ts"
-            ],
             "utils/screen": [
                 "dist/utils.screen.d.ts"
             ],
@@ -102,6 +99,9 @@
             ],
             "utils/three": [
                 "dist/utils.three.d.ts"
+            ],
+            "utils/time": [
+                "dist/utils.time.d.ts"
             ],
             "utils/tree": [
                 "dist/utils.tree.d.ts"
@@ -128,7 +128,7 @@
         "@types/babel__traverse": "^7.20.6",
         "@types/node": "^22.4.0",
         "@types/three": "^0.169.0",
-        "battuta": "0.0.2",
+        "battuta": "0.0.22",
         "typescript": "github:BobochD-Brew/TypeScript-dist.git#139ece2da4c5329b00555e37f5d508ca22401473",
         "vite-plugin-dts": "^4.0.3",
         "vite-plugin-externalize-deps": "^0.8.0"
@@ -138,16 +138,15 @@
         "@babel/parser": "^7.25.3",
         "@babel/traverse": "^7.25.3",
         "@babel/types": "^7.25.2",
+        "@tweakpane/core": "^2.0.4",
         "commander": "^12.1.0",
-        "ts-morph": "^25.0.1",
         "postcss": "^8.4.41",
-        "unplugin-macros": "github:BobochD-Brew/unplugin-macros.git#0d7dc8bfc26bcc86a0bf8e40929994eaa6ca339e",
-        "vite": "^5.4.1",
-        "tweakpane": "^4.0.4",
         "terser": "^5.31.6",
-        "@tweakpane/core": "^2.0.4"
+        "ts-morph": "^25.0.1",
+        "tweakpane": "^4.0.4",
+        "unplugin-macros": "github:BobochD-Brew/unplugin-macros.git#0d7dc8bfc26bcc86a0bf8e40929994eaa6ca339e",
+        "vite": "^5.4.1"
     },
-    "optionalDependencies": {},
     "peerDependencies": {
         "three": "*"
     },

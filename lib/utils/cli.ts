@@ -36,7 +36,7 @@ program
         execSync("npm init -y");
         execSync("npm install battuta --verbose");
         mkdirSync("./src");
-        const defaultCode = `import { render } from "battuta/runtime"\n\nfunction App() {\n\n    return <div>Hello, World!</div>\n}\n\nrender(App, document.querySelector<HTMLDivElement>('#app')!)`;
+        const defaultCode = `import { render } from "battuta/utils/tree"\n\nfunction App() {\n\n    return <div>Hello, World!</div>\n}\n\nrender(App, document.querySelector<HTMLDivElement>('#app')!)`;
         writeFileSync("./src/main.tsx", defaultCode)
         const defaultTsConfig = `{\n    "compilerOptions": {\n        "module": "ESNext",\n        "target": "ES2020",\n        "moduleResolution": "bundler",\n        "lib": [\n            "ES2020",\n            "DOM",\n            "DOM.Iterable"\n        ],\n        "jsx": "preserve",\n        "jsxImportSource": "battuta",\n    },\n    "include": ["./**/*.ts", "./**/*.tsx"],\n    "exclude": [\n        "node_modules/**/*"\n    ]\n}`
         writeFileSync("./tsconfig.json", defaultTsConfig)

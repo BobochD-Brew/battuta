@@ -138,7 +138,9 @@ function handleJSXElement(node: t.JSXElement | t.JSXFragment): t.Expression | nu
 	return t.callExpression(
 		t.identifier(tagName),
 		[t.objectExpression([
-			...props.map(
+			...props
+			.filter(({ key }) => key[0].value != "$d")
+			.map(
 				({ key, value }) => ["StringLiteral", "BooleanLiteral"].includes(value.type) ?
 					t.objectProperty(t.stringLiteral(joinKeys(...key)), value) :
 					t.objectMethod("get", t.identifier(joinKeys(...key)), [], t.blockStatement([t.returnStatement(value)]))
@@ -196,6 +198,7 @@ function withChildren(children: t.Expression[], node: t.Expression) {
 }
 
 function withSeal(node: t.Expression) {
+	return node;
 	return t.callExpression(
 		t.memberExpression(
 			node,

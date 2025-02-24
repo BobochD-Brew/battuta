@@ -5,7 +5,7 @@ import { externalizeDeps } from 'vite-plugin-externalize-deps'
 import packageJson from "./package.json"
 import tsConfig from "./tsconfig.json"
 import { readdirSync, writeFileSync } from 'fs'
-import { battutaJSX } from "./node_modules/battuta/dist/vite"
+import { battutaInferModes, battutaJSX } from "./node_modules/battuta/dist/vite"
 
 /**
  *          MODULES 
@@ -96,6 +96,7 @@ export default defineConfig(({ mode }) => ({
             }
         }),
         externalizeDeps(),
+        battutaInferModes(),
         battutaJSX(),
     ],
     define: {

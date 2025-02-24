@@ -70,6 +70,8 @@ function inferMode(opening: JsxOpeningElement | JsxSelfClosingElement): { name: 
             const classDeclarations = declarations?.filter(decl => decl.getKindName() === "ClassDeclaration");
             return type.isArray() || type.isClass() || !!classDeclarations?.length
         }))) return { name: "$f", initializer };
+        if (callSignatures.every((l) => l.getParameters().length == 0)) return { name: "$f", initializer };
+        if (callSignatures.some((l) => l.getParameters().some((p) => p.getDeclaredType().isString() || p.getDeclaredType().isNumber()))) return { name: "$f", initializer };
     }
 
     return { name: "$d" }
