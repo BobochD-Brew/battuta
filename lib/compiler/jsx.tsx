@@ -85,7 +85,7 @@ function handleJSXElement(node: t.JSXElement | t.JSXFragment): t.Expression | nu
 		const bestCandidate = constructorCandidates.sort((a, b) => b.filter(Boolean).length - a.filter(Boolean).length)[0];
 		const keys = constructorSignatures[constructorCandidates.indexOf(bestCandidate)];
 		const args = [];
-		while(children.length || bestCandidate.length) args.push(bestCandidate.shift() || children.shift());
+		while(bestCandidate.length) args.push(bestCandidate.shift() || children.shift());
 		const lastNonNull = args.findLastIndex(Boolean);
 		const constructor = args.slice(0, lastNonNull + 1).map(el => el || t.identifier("undefined"));
 
