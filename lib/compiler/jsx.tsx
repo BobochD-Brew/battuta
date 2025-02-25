@@ -83,9 +83,11 @@ function handleJSXElement(node: t.JSXElement | t.JSXFragment): t.Expression | nu
 
 		const constructorCandidates = constructorSignatures.map(sig => sig.map(param => objectProps[param]))
 		const bestCandidate = constructorCandidates.sort((a, b) => b.filter(Boolean).length - a.filter(Boolean).length)[0];
-		const lastNonNull = bestCandidate.findLastIndex(Boolean);
-		const constructor = bestCandidate.slice(0, lastNonNull + 1);
 		const keys = constructorSignatures[constructorCandidates.indexOf(bestCandidate)];
+		const args = [];
+		while(children.length || bestCandidate.length) args.push(bestCandidate.shift() || children.shift());
+		const lastNonNull = args.findLastIndex(Boolean);
+		const constructor = args.slice(0, lastNonNull + 1).map(el => el || t.identifier("undefined"));
 
 		return withSeal(
 			withChildren(
@@ -98,7 +100,7 @@ function handleJSXElement(node: t.JSXElement | t.JSXFragment): t.Expression | nu
 							t.identifier(btt('create')),
 							true
 						),
-						constructor.map(el => el || t.identifier("undefined"))
+						constructor
 					)
 				)
 			)

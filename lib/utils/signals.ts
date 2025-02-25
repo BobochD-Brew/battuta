@@ -10,7 +10,7 @@ export function useDebounced(callback: Function, debounceTime = 250) {
     });
 }
 
-export function computed<T>(f: () => T) {
+export function createComputed<T>(f: () => T) {
     const [value, setValue] = createSignal<T>(undefined as any);
     useEffect(() => {
         const newValue = f();

@@ -1,7 +1,7 @@
 {
     "name": "battuta",
     "private": false,
-    "version": "0.0.23",
+    "version": "0.0.24",
     "type": "module",
     "license": "MIT",
     "bin": {
@@ -129,7 +129,7 @@
         "@types/node": "^22.4.0",
         "@types/three": "^0.169.0",
         "battuta": "0.0.23",
-        "typescript": "github:BobochD-Brew/TypeScript-dist.git#139ece2da4c5329b00555e37f5d508ca22401473",
+        "typescript": "github:BobochD-Brew/TypeScript-dist.git#4922155b00875cec5e54b09d5da87115142b4912",
         "vite-plugin-dts": "^4.0.3",
         "vite-plugin-externalize-deps": "^0.8.0"
     },

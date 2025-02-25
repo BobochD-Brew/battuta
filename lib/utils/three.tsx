@@ -1,11 +1,10 @@
 import { append, childrenIndex, cleanup, empty, insert, remove } from "@runtime";
 import { createSignal, untrack, useEffect } from "@signals";
 import { aspectRatio, height, width } from "./screen";
-import { Clock, Controls, Group, Object3D, PCFSoftShadowMap, PerspectiveCamera, Renderer, Scene, Vector2, WebGLRenderer } from "three";
+import { BufferAttribute, BufferGeometry, Clock, Controls, Group, Object3D, PCFSoftShadowMap, PerspectiveCamera, Renderer, Scene, Vector2, WebGLRenderer } from "three";
 import { EffectComposer, OrbitControls, RenderPass } from "three/examples/jsm/Addons.js";
 import { createContext } from "../contexts";
 import { onCleanup } from "./tree";
-import { uniform as uniformTHREE } from "three/webgpu";
 
 Object3D.prototype[insert] = function(child: any){
     this.add(child);
@@ -132,8 +131,9 @@ export function uniform<T>(get: () => T) {
     return u;
 }
 
-export function uniformTSL<T>(value: () => T) {
-    const u = uniformTHREE(untrack(value));
-    useEffect(() => u.value = value());
-    return u;
+export function JsonGeometry({ json }: { json: number[][] }) {
+    return new BufferGeometry()
+        .setAttribute('position', new BufferAttribute(new Float32Array(json[0]), 3))
+        .setAttribute('normal', new BufferAttribute(new Float32Array(json[1]), 3))
+        .setIndex(new BufferAttribute(new Uint16Array(json[2]), 1));
 }

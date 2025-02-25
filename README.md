@@ -38,7 +38,7 @@ then run it with `npm run dev`
 
 ```tsx
 import { time } from "battuta/utils/time";
-import { computed } from "battuta/utils/signals";
+import { createComputed } from "battuta/utils/signals";
 import { Canvas } from "battuta/utils/three";
 // import objects directly from third party libraries
 import { Mesh, BoxGeometry, MeshBasicMaterial, Group, BufferGeometry } from "three";
@@ -49,7 +49,7 @@ function Rotated(geometry: BufferGeometry) {
 
 function App() {
     const [ amplitude, setAmplitude ] = createSignal(10);
-    const wave = computed(() => Math.sin(time()) * amplitude());
+    const wave = createComputed(() => Math.sin(time()) * amplitude());
     const increase = () => setAmplitude(amplitude() + 1);
 
     return <div>
