@@ -59,6 +59,7 @@ export function sample(a: number, b: number, v: number) {
 }
 
 export function cursor(values: number[], v: number) {
+    v = clamp(0, values.length - 1.001, v);
     const indexPre = Math.floor(v);
     const indexPost = Math.ceil(v);
     const t = v - indexPre;
