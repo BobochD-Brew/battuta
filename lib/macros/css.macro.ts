@@ -1,12 +1,19 @@
 import fs from 'fs';
 import path from 'path';
+import { createRequire } from 'module';
 import postcss from 'postcss';
 import { MacroContext } from "unplugin-macros";
+
+const require = createRequire(import.meta.url);
+const configPath = path.join(process.cwd(), 'postcss.config.js');
+const config = require(configPath);
+const { plugins = [], options = {} } = config;
 
 export function css(this: any, css: TemplateStringsArray, ..._args: any[]): Record<string, string> {
     const context = this as MacroContext;
     const classMap: Record<string, string> = {};
-    const root = postcss.parse(css);
+    const processed = postcss(plugins).process(css, options);
+    const root = processed.root;
 
     root.walkRules(rule => {
         rule.selectors = rule.selectors.map(selector => {
@@ -18,7 +25,8 @@ export function css(this: any, css: TemplateStringsArray, ..._args: any[]): Reco
         });
     });
 
-    const updatedCss = root.toString();
+    const updatedCss = root.toResult().css
+
     // @ts-ignore
     if (process.env.NODE_ENV !== "development") {
         const outputDir = '.temp';
