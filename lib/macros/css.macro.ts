@@ -1,4 +1,4 @@
-import fs from 'fs';
+import fs, { existsSync } from 'fs';
 import path from 'path';
 import { createRequire } from 'module';
 import postcss from 'postcss';
@@ -6,7 +6,7 @@ import { MacroContext } from "unplugin-macros";
 
 const require = createRequire(import.meta.url);
 const configPath = path.join(process.cwd(), 'postcss.config.js');
-const config = require(configPath);
+const config = existsSync(configPath) ? require(configPath) : {};
 const { plugins = [], options = {} } = config;
 
 export function css(this: any, css: TemplateStringsArray, ..._args: any[]): Record<string, string> {

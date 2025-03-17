@@ -21,6 +21,7 @@ class DomElement  {
     [set] = (value: any, ...keys: any) => (this.properties[keys.join(":")] = value, this);
     [empty] = () => new String("")[set](() => null, remove as any);
     [insert] = (child: any, index: any) => {
+        if(index == -1) index = this.childrens.length;
         if(typeof child == "string") child = new String(child);
         this.childrens.splice(index, 0, child as never);
         child[remove] = () => this.childrens.splice(this.childrens.indexOf(child), 1);
