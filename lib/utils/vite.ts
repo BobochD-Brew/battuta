@@ -3,7 +3,7 @@ import battutaMacros from 'unplugin-macros/vite'
 import { Options } from "unplugin-macros";
 import { Plugin } from "vite";
 import { optimize } from "@optimizer";
-import { existsSync, readFileSync, lstatSync, mkdirSync, readdirSync, renameSync, rmdirSync } from "fs";
+import { existsSync, readFileSync, lstatSync, mkdirSync, readdirSync, renameSync, rmSync } from "fs";
 import path, { join, resolve } from "path";
 
 export default function battutaPlugins(config?: {
@@ -69,13 +69,13 @@ export const battutaFolders = plgn((config?: { temp: string,  move: string }) =>
         const moveDir = resolve(config?.move ?? ".move");
         const distDir = join(options.dir!);
         if (!existsSync(distDir)) mkdirSync(distDir, { recursive: true });
-        if (existsSync(tempDir)) rmdirSync(tempDir, { recursive: true, force: true } as any);
+        if (existsSync(tempDir)) rmSync(tempDir, { recursive: true, force: true } as any);
         if (existsSync(moveDir)) {
             readdirSync(moveDir).forEach(file => {
                 const moveFilePath = path.join(moveDir, file);
                 if (lstatSync(moveFilePath).isFile()) renameSync(moveFilePath, path.join(distDir, file));
             });
-            rmdirSync(moveDir, { recursive: true, force: true } as any);
+            rmSync(moveDir, { recursive: true, force: true } as any);
         }
     },
 }));
@@ -107,10 +107,10 @@ export const battutaVirtualRoot = (opts?: { pages: Record<string, string> }) => 
                 const url = req.url?.slice(1)?.replace(".html", "");
                 const id = url ? `${url}.html` : "index.html";
                 if (!contents[id]) return next();
-                const content = existsSync(`./${id}`) ? readFileSync(`./${id}`, "utf-8") : dev(contents[id]);
+                const content = existsSync(`./${id}`) ? readFileSync(`./${id}`, "utf-8") : contents[id];
                 res.setHeader('Content-Type', 'text/html')
                 res.statusCode = 200;
-                res.end(content)
+                res.end(dev(content))
             })
         },
         config: () => ({
