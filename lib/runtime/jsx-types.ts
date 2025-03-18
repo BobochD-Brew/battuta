@@ -3,14 +3,18 @@ export declare const jsxDEV: typeof jsx;
 export declare function jsxFragment(): void;
 
 export namespace JSX {
+    export type ElementOf<T> = any;
+    export interface IntrinsicElements extends Record<string, any> {}
+    export type LibraryManagedAttributes<C, P> = Record<string, any>;
+
     export type ElementType = any;
-    export type LibraryManagedAttributes<C, P> = Attributes<C, P>;
-    export interface IntrinsicElements extends Elements {}
+    // export type LibraryManagedAttributes<C, P> = Attributes<C, P>;
+    // export interface IntrinsicElements extends Elements {}
     export interface ElementAttributesProperty {}
     export interface IntrinsicAttributes {}
     export interface ElementChildrenAttribute { children: {} }
     // this is not available yet in standard typescript jsx https://github.com/microsoft/TypeScript/issues/14729
-    export type ElementOf<T> = Result<T>;
+    // export type ElementOf<T> = Result<T>;
 }
 
 // @ts-ignore
