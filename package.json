@@ -1,7 +1,7 @@
 {
     "name": "battuta",
     "private": false,
-    "version": "0.0.38",
+    "version": "0.0.41",
     "type": "module",
     "license": "MIT",
     "bin": {
@@ -36,7 +36,8 @@
         "./utils/tree": "./dist/utils.tree.js",
         "./utils/tweak": "./dist/utils.tweak.js",
         "./macros/css.macro": "./dist/macros.css.macro.js",
-        "./macros/glsl.macro": "./dist/macros.glsl.macro.js"
+        "./macros/glsl.macro": "./dist/macros.glsl.macro.js",
+        "./macros/javascript.macro": "./dist/macros.javascript.macro.js"
     },
     "typesVersions": {
         "*": {
@@ -114,6 +115,9 @@
             ],
             "macros/glsl.macro": [
                 "dist/macros.glsl.macro.d.ts"
+            ],
+            "macros/javascript.macro": [
+                "dist/macros.javascript.macro.d.ts"
             ]
         }
     },

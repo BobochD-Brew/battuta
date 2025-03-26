@@ -1,4 +1,5 @@
 
+// vs extension: boyswan.glsl-literal
 export function glsl(this: any, code: TemplateStringsArray, ..._args: any[]): (opts?: any) => string {
     const regex = /<(\w+)>/g;
     const glslCode = code as any;

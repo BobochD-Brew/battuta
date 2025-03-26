@@ -9,6 +9,7 @@ const configPath = path.join(process.cwd(), 'postcss.config.js');
 const config = existsSync(configPath) ? require(configPath) : {};
 const { plugins = [], options = {} } = config;
 
+// vs extension: bashmish.es6-string-css
 export function css(this: any, css: TemplateStringsArray, ..._args: any[]): Record<string, string> {
     const context = this as MacroContext;
     const classMap: Record<string, string> = {};

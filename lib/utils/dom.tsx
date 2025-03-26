@@ -1,4 +1,5 @@
-import { childrenIndex, empty, insert, remove } from "@runtime";
+import { assign, childrenIndex, empty, insert, remove, resolve, set } from "@runtime";
+import { useEffect } from "@signals";
 
 const elementPrototype = Element.prototype;
 
@@ -27,6 +28,21 @@ elementPrototype[insert] = function(child, index) {
     // HEAVY
     this.insertBefore(child as Element, this.childNodes[index]);
     return child;
+}
+
+elementPrototype[set] = function (value, ...keys) {
+    if(keys[0] == "style" && keys[1].startsWith("$")) keys[1] = "--" + keys[1].slice(1);
+    const key = keys.pop()!;
+    this[resolve](keys)[key] = value;
+    return this;
+}
+
+elementPrototype[assign] = function (value, ...keys) {
+    if(keys[0] == "style" && keys[1].startsWith("$")) keys[1] = "--" + keys[1].slice(1);
+    const key = keys.pop()!;
+    const target = this[resolve](keys);
+    useEffect(() => target[key] = value());
+    return this;
 }
 
 // HEAVY
